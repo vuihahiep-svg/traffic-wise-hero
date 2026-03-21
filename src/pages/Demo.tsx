@@ -167,7 +167,7 @@ const Demo = () => {
       const { data, error } = await supabase.functions.invoke("media-seed-latest");
       if (error) throw error;
 
-      const routes: { route: string; score: number; reason: string; node?: boolean }[] = data?.routes || [];
+      const routes: { route: string; score: number; reason: string; node: boolean }[] = data?.routes || [];
       if (routes.length === 0) {
         if (!silent) addLog("⚠ No route scores returned from API");
         setLoadingSync(false);
