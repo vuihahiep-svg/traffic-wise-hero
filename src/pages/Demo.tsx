@@ -219,10 +219,11 @@ const Demo = () => {
             }
           } else {
             // node: false or missing → this is a road/edge
-            const edgeIdx = updatedGraph.edges.findIndex((e) =>
-              e.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-              entry.route.toLowerCase().includes(e.name.toLowerCase())
-            );
+            const routeNorm2 = stripDiacritics(entry.route);
+            const edgeIdx = updatedGraph.edges.findIndex((e) => {
+              const nameNorm = stripDiacritics(e.name);
+              return nameNorm.includes(routeNorm2) || routeNorm2.includes(nameNorm);
+            });
             if (edgeIdx !== -1) {
               const oldWeight = updatedGraph.edges[edgeIdx].weight;
               updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: entry.score };
