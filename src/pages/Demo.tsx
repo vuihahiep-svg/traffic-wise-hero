@@ -59,6 +59,7 @@ const Demo = () => {
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [loadingTraffic, setLoadingTraffic] = useState(false);
   const [loadingFlood, setLoadingFlood] = useState(false);
+  const [loadingSync, setLoadingSync] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [analysisMode, setAnalysisMode] = useState<"flood" | "traffic">("flood");
 
@@ -145,6 +146,74 @@ const Demo = () => {
       addLog(`✅ Route found: ${nodeNames} (Total weight: ${result.totalWeight})`);
     }
     setLoadingRoute(false);
+  };
+
+  const syncMediaSeed = async () => {
+    setLoadingSync(true);
+    addLog("📡 Fetching latest route scores from API...");
+    await delay(1000);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("media-seed-latest");
+      if (error) throw error;
+
+      const routes: { route: string; score: number; reason: string }[] = data?.routes || [];
+      if (routes.length === 0) {
+        addLog("⚠ No route scores returned from API");
+        setLoadingSync(false);
+        return;
+      }
+
+      const updatedGraph = { ...graph, edges: [...graph.edges], nodes: [...graph.nodes] };
+      let matched = 0;
+
+      for (const entry of routes) {
+        // Try to match route name to edges
+        const edgeIdx = updatedGraph.edges.findIndex((e) =>
+          e.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+          entry.route.toLowerCase().includes(e.name.toLowerCase())
+        );
+        if (edgeIdx !== -1) {
+          const oldWeight = updatedGraph.edges[edgeIdx].weight;
+          updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: entry.score };
+          addLog(`📊 API: "${updatedGraph.edges[edgeIdx].name}" → score ${oldWeight} → ${entry.score} (${entry.reason})`);
+          matched++;
+        }
+
+        // Also try matching to nodes (for flood/intersection scores)
+        const nodeIdx = updatedGraph.nodes.findIndex((n) =>
+          n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+          entry.route.toLowerCase().includes(n.name.toLowerCase())
+        );
+        if (nodeIdx !== -1 && entry.score >= 50) {
+          updatedGraph.nodes[nodeIdx] = {
+            ...updatedGraph.nodes[nodeIdx],
+            flooded: true,
+            floodScore: entry.score,
+          };
+          addLog(`🌊 API: "${updatedGraph.nodes[nodeIdx].name}" marked flooded (score: ${entry.score})`);
+          matched++;
+        } else if (nodeIdx !== -1 && entry.score < 50) {
+          updatedGraph.nodes[nodeIdx] = {
+            ...updatedGraph.nodes[nodeIdx],
+            flooded: false,
+            floodScore: entry.score,
+          };
+          matched++;
+        }
+      }
+
+      addLog(`✅ Synced ${routes.length} scores from API (${matched} matched to graph)`);
+      setGraph(updatedGraph);
+      recalculateRoute(updatedGraph);
+      if (startNode && endNode) {
+        addLog("🔄 Route recalculated with API scores");
+      }
+    } catch (err: any) {
+      addLog(`❌ API sync failed: ${err.message || "Unknown error"}`);
+    }
+
+    setLoadingSync(false);
   };
 
   const handleTrafficReport = async (reportText?: string) => {
@@ -546,6 +615,9 @@ const Demo = () => {
                 </div>
                 <button onClick={findRoute} disabled={loadingRoute || !startNode || !endNode} className="w-full bg-primary-container text-primary-container-foreground py-2.5 rounded font-headline font-bold uppercase tracking-widest text-sm active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
                   {loadingRoute ? "Calculating..." : "Find Best Route"}
+                </button>
+                <button onClick={syncMediaSeed} disabled={loadingSync} className="w-full bg-tertiary/15 text-tertiary py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none relative overflow-hidden">
+                  {loadingSync ? "Syncing API..." : "📡 Sync Scores from API"}
                 </button>
                 <button onClick={resetGraph} className="w-full border border-outline-variant/20 text-on-surface-variant py-2 rounded text-xs uppercase tracking-widest active:scale-95 transition-transform">Reset All</button>
               </div>
