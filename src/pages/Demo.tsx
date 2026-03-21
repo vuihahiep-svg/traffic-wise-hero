@@ -45,7 +45,8 @@ const Demo = () => {
   const [bestPath, setBestPath] = useState<{ path: string[]; edgeIds: string[]; totalWeight: number } | null>(null);
   const [audioText, setAudioText] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const audioRecognitionRef = useRef<any>(null);
   const [audioTranscript, setAudioTranscript] = useState("");
   const [correctedText, setCorrectedText] = useState("");
   const [loadingAudio, setLoadingAudio] = useState(false);
