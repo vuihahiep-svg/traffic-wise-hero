@@ -15,7 +15,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { type, imageBase64, textReport, roadNames, nodeNames } = await req.json();
+    const { type, imageBase64, textReport, roadNames, nodeNames, audioBase64, mimeType } = await req.json();
 
     let systemPrompt = "";
     let userContent: any[] = [];
