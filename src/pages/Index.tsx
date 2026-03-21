@@ -150,7 +150,7 @@ const Index = () => (
         <div className="text-center mb-20">
           <span className="text-tertiary font-label text-sm font-bold uppercase tracking-widest block mb-4">Multi-Agent Architecture</span>
           <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter uppercase mb-6">
-            Four Specialized Agents,<br /><span className="text-gradient">One Unified Intelligence.</span>
+            System Architecture,<br /><span className="text-gradient">One Unified Intelligence.</span>
           </h2>
           <p className="text-on-surface-variant max-w-2xl mx-auto font-body">
             Each agent is a domain expert. Together, they form a collaborative intelligence network that sees what no single system can.
