@@ -104,20 +104,30 @@ const Demo = () => {
       const toNode = graph.nodes.find((n) => n.id === edge.to);
       if (!fromNode || !toNode) return;
       const isOnBestPath = bestPath?.edgeIds.includes(edge.id) ?? false;
+      const isTrafficJam = edge.weight >= 70;
       L.polyline([[fromNode.lat, fromNode.lng], [toNode.lat, toNode.lng]], {
         color: isOnBestPath ? "#2792ff" : getEdgeColor(edge.weight),
-        weight: isOnBestPath ? 6 : 3,
+        weight: isOnBestPath ? 6 : isTrafficJam ? 5 : 3,
         opacity: isOnBestPath ? 1 : 0.6,
-      }).bindPopup(`<strong>${edge.name}</strong><br/>Weight: ${edge.weight}/100`).addTo(layerGroup);
+        dashArray: isTrafficJam && !isOnBestPath ? "8 6" : undefined,
+      }).bindPopup(`<strong>${edge.name}</strong><br/>Weight: ${edge.weight}/100${isTrafficJam ? '<br/><span style="color:#ff4444;font-weight:700;">⚠️ TRAFFIC JAM</span>' : ''}`).addTo(layerGroup);
+      // Traffic zone circle at midpoint for heavily congested roads
+      if (edge.weight >= 80) {
+        const midLat = (fromNode.lat + toNode.lat) / 2;
+        const midLng = (fromNode.lng + toNode.lng) / 2;
+        L.circle([midLat, midLng], { radius: 250, color: "#ff8800", fillColor: "#ff8800", fillOpacity: 0.12, weight: 1, dashArray: "4 4" }).addTo(layerGroup);
+      }
     });
 
     graph.nodes.forEach((node) => {
-      const markerColor = node.id === startNode ? "#2792ff" : node.id === endNode ? "#3ce36a" : node.flooded ? "#ff4444" : "#a5c8ff";
+      const markerColor = node.id === startNode ? "#2792ff" : node.id === endNode ? "#3ce36a" : node.flooded ? "#ff4444" : node.floodScore >= 70 ? "#ff8800" : "#a5c8ff";
       L.circleMarker([node.lat, node.lng], {
         radius: 7, color: "#041329", weight: 2, fillColor: markerColor, fillOpacity: 1,
-      }).bindPopup(`<div style="font-size:12px;line-height:1.5;"><strong>${node.name}</strong><br/>${node.flooded ? `<span style="color:#ff4444;font-weight:700;">🌊 FLOODED (Score: ${node.floodScore})</span>` : "Normal"}</div>`).addTo(layerGroup);
+      }).bindPopup(`<div style="font-size:12px;line-height:1.5;"><strong>${node.name}</strong><br/>${node.flooded ? `<span style="color:#ff4444;font-weight:700;">🌊 FLOODED (Score: ${node.floodScore})</span>` : node.floodScore >= 70 ? `<span style="color:#ff8800;font-weight:700;">⚠️ CONGESTED (Score: ${node.floodScore})</span>` : "Normal"}</div>`).addTo(layerGroup);
       if (node.flooded) {
         L.circle([node.lat, node.lng], { radius: 400, color: "#ff4444", fillColor: "#ff4444", fillOpacity: 0.18, weight: 2 }).addTo(layerGroup);
+      } else if (node.floodScore >= 70) {
+        L.circle([node.lat, node.lng], { radius: 300, color: "#ff8800", fillColor: "#ff8800", fillOpacity: 0.12, weight: 1, dashArray: "6 4" }).addTo(layerGroup);
       }
     });
   }, [graph, startNode, endNode, bestPath]);
