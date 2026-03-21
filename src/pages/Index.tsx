@@ -235,6 +235,142 @@ const Index = () => (
       </div>
     </Section>
 
+    {/* CITY INTELLIGENCE REPORT */}
+    <Section className="py-32 bg-surface-container">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="text-center mb-20">
+          <span className="text-tertiary font-label text-sm font-bold uppercase tracking-widest block mb-4">Live Data Layer</span>
+          <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter uppercase mb-6">
+            City Intelligence<br /><span className="text-gradient">Report.</span>
+          </h2>
+          <p className="text-on-surface-variant max-w-2xl mx-auto font-body">
+            Every road, intersection, and environmental zone is continuously scored. Here's what the system sees right now.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          {/* Road Conditions Table */}
+          <div className="bg-surface rounded-md border border-on-surface/5 overflow-hidden">
+            <div className="px-6 py-4 border-b border-on-surface/5 flex items-center justify-between">
+              <h4 className="font-headline font-bold uppercase tracking-tight text-sm">Road Segments (Edges)</h4>
+              <span className="text-[10px] font-label uppercase tracking-widest text-tertiary flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-tertiary rounded-full animate-pulse" /> Real-time
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-on-surface/5 text-left">
+                    <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label">Road</th>
+                    <th className="px-4 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label">District</th>
+                    <th className="px-4 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label text-right">Score</th>
+                    <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { road: "Nguyễn Huệ Blvd", dist: "D1", score: 12, status: "Clear" },
+                    { road: "Lê Lợi Avenue", dist: "D1", score: 28, status: "Moderate" },
+                    { road: "Nguyễn Trãi Corridor", dist: "D5", score: 74, status: "Congested" },
+                    { road: "Xa Lộ Hà Nội", dist: "Thủ Đức", score: 91, status: "Severe" },
+                    { road: "Điện Biên Phủ", dist: "BT", score: 45, status: "Moderate" },
+                    { road: "CMT8 Boulevard", dist: "D10", score: 63, status: "Congested" },
+                  ].map((r) => (
+                    <tr key={r.road} className="border-b border-on-surface/5 last:border-0 hover:bg-surface-container-low/50 transition-colors">
+                      <td className="px-6 py-3 font-bold text-on-surface">{r.road}</td>
+                      <td className="px-4 py-3 text-on-surface-variant/70">{r.dist}</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={`font-headline font-bold tabular-nums ${r.score < 30 ? "text-tertiary" : r.score < 60 ? "text-[hsl(45,90%,50%)]" : "text-error"}`}>
+                          {r.score}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${
+                          r.score < 30 ? "bg-tertiary/10 text-tertiary" : r.score < 60 ? "bg-[hsl(45,90%,50%)]/10 text-[hsl(45,90%,40%)]" : "bg-error/10 text-error"
+                        }`}>
+                          {r.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Intersection Nodes Table */}
+          <div className="bg-surface rounded-md border border-on-surface/5 overflow-hidden">
+            <div className="px-6 py-4 border-b border-on-surface/5 flex items-center justify-between">
+              <h4 className="font-headline font-bold uppercase tracking-tight text-sm">Intersections (Nodes)</h4>
+              <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant/50">18 Active Nodes</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-on-surface/5 text-left">
+                    <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label">Intersection</th>
+                    <th className="px-4 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label text-right">Flood Risk</th>
+                    <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label">Condition</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { node: "Bến Thành Market", risk: 8, cond: "Normal" },
+                    { node: "Ngã Tư Hàng Xanh", risk: 72, cond: "Flood Warning" },
+                    { node: "Ngã 6 Phù Đổng", risk: 15, cond: "Normal" },
+                    { node: "Vòng Xoay Dân Chủ", risk: 55, cond: "Watch Zone" },
+                    { node: "Cầu Sài Gòn", risk: 88, cond: "Flooded" },
+                    { node: "Ngã 4 Bảy Hiền", risk: 34, cond: "Watch Zone" },
+                  ].map((n) => (
+                    <tr key={n.node} className="border-b border-on-surface/5 last:border-0 hover:bg-surface-container-low/50 transition-colors">
+                      <td className="px-6 py-3 font-bold text-on-surface">{n.node}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="w-16 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${n.risk < 30 ? "bg-tertiary" : n.risk < 60 ? "bg-[hsl(45,90%,50%)]" : "bg-error"}`} style={{ width: `${n.risk}%` }} />
+                          </div>
+                          <span className={`font-headline font-bold tabular-nums text-xs ${n.risk < 30 ? "text-tertiary" : n.risk < 60 ? "text-[hsl(45,90%,50%)]" : "text-error"}`}>
+                            {n.risk}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${
+                          n.risk < 30 ? "bg-tertiary/10 text-tertiary" : n.risk < 60 ? "bg-[hsl(45,90%,50%)]/10 text-[hsl(45,90%,40%)]" : "bg-error/10 text-error"
+                        }`}>
+                          {n.cond}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Environmental Prediction Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[
+            { icon: "🌧", label: "Rainfall Forecast", value: "78mm", sub: "Next 6 hours — Heavy", severity: "high" },
+            { icon: "🌊", label: "Flood Probability", value: "64%", sub: "District 7, Bình Thạnh", severity: "high" },
+            { icon: "🌡", label: "Humidity Index", value: "92%", sub: "Saturation threshold near", severity: "medium" },
+            { icon: "📡", label: "Active Sensors", value: "1,247", sub: "Coverage: 87% of network", severity: "low" },
+          ].map((c) => (
+            <div key={c.label} className="p-6 bg-surface rounded-md border border-on-surface/5 relative overflow-hidden group hover:translate-y-[-4px] transition-transform duration-300">
+              <div className={`absolute top-0 left-0 w-full h-0.5 ${c.severity === "high" ? "bg-error" : c.severity === "medium" ? "bg-[hsl(45,90%,50%)]" : "bg-tertiary"}`} />
+              <div className="text-3xl mb-4">{c.icon}</div>
+              <div className="text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-label mb-1">{c.label}</div>
+              <div className={`font-headline font-black text-3xl tabular-nums mb-2 ${c.severity === "high" ? "text-error" : c.severity === "medium" ? "text-[hsl(45,90%,50%)]" : "text-tertiary"}`}>
+                {c.value}
+              </div>
+              <div className="text-xs text-on-surface-variant/60">{c.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Section>
+
     {/* MARKET – TAM / SAM / SOM */}
     <Section id="market" className="py-32">
       <div className="max-w-7xl mx-auto px-8">
