@@ -180,6 +180,8 @@ const Demo = () => {
     setLoadingTraffic(false);
   };
 
+  const TARGET_NODE_ID = "n17"; // Ngã 4 Phú Nhuận
+
   const handleImageAnalysis = async () => {
     if (!imageFile) return;
     const isFlood = analysisMode === "flood";
@@ -205,45 +207,68 @@ const Demo = () => {
       if (error) throw error;
       await delay(1000);
 
+      const targetNode = graph.nodes.find((n) => n.id === TARGET_NODE_ID);
+      const connectedEdges = graph.edges.filter((e) => e.from === TARGET_NODE_ID || e.to === TARGET_NODE_ID);
+
       if (isFlood && data?.result) {
         const r = data.result;
         addLog(`🌊 AI: Flooding ${r.flooded ? "DETECTED" : "not detected"} — Score: ${r.floodScore}`);
         addLog(`📝 ${r.description}`);
 
-        if (r.flooded) {
-          const updatedGraph = { ...graph, edges: [...graph.edges], nodes: graph.nodes.map((node) => {
-            const affected = r.affectedNodes?.some((name: string) =>
-              node.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(node.name.toLowerCase())
-            );
-            if (affected) {
-              addLog(`🌊 Flood zone: "${node.name}" — score: ${r.floodScore}`);
-              return { ...node, flooded: true, floodScore: r.floodScore };
-            }
-            return node;
-          })};
+        if (r.flooded && targetNode) {
+          addLog(`📍 Auto-mapped to: ${targetNode.name}`);
+          const updatedGraph = {
+            ...graph,
+            nodes: graph.nodes.map((node) =>
+              node.id === TARGET_NODE_ID
+                ? { ...node, flooded: true, floodScore: r.floodScore }
+                : node
+            ),
+            edges: graph.edges.map((edge) => {
+              if (edge.from === TARGET_NODE_ID || edge.to === TARGET_NODE_ID) {
+                const newWeight = Math.min(100, Math.max(edge.weight, Math.round(r.floodScore * 0.8)));
+                return { ...edge, weight: newWeight };
+              }
+              return edge;
+            }),
+          };
+          addLog(`🌊 Flood zone marked at "${targetNode.name}" — score: ${r.floodScore}`);
+          connectedEdges.forEach((e) => addLog(`   ↳ Road "${e.name}" weight increased`));
           setGraph(updatedGraph);
           recalculateRoute(updatedGraph);
           addLog("🔄 Route recalculated after flood detection");
+
+          // Pan map to flood zone
+          if (mapRef.current) {
+            mapRef.current.flyTo([targetNode.lat, targetNode.lng], 15, { duration: 1 });
+          }
         }
       } else if (!isFlood && data?.result) {
         const r = data.result;
         addLog(`🚗 AI: Traffic ${r.congested ? "CONGESTED" : "clear"} — Score: ${r.congestionScore}`);
         addLog(`📝 ${r.description}`);
 
-        if (r.congested && r.affectedRoads?.length > 0) {
-          const updatedGraph = { ...graph, edges: graph.edges.map((edge) => {
-            const affected = r.affectedRoads.some((name: string) =>
-              edge.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(edge.name.toLowerCase())
-            );
-            if (affected) {
-              addLog(`🚗 Traffic jam: "${edge.name}" → weight: ${r.congestionScore}`);
-              return { ...edge, weight: r.congestionScore };
-            }
-            return edge;
-          }), nodes: [...graph.nodes] };
+        if (r.congested && targetNode) {
+          addLog(`📍 Auto-mapped to: ${targetNode.name}`);
+          const updatedGraph = {
+            ...graph,
+            edges: graph.edges.map((edge) => {
+              if (edge.from === TARGET_NODE_ID || edge.to === TARGET_NODE_ID) {
+                addLog(`🚗 Traffic jam: "${edge.name}" → weight: ${r.congestionScore}`);
+                return { ...edge, weight: r.congestionScore };
+              }
+              return edge;
+            }),
+            nodes: [...graph.nodes],
+          };
           setGraph(updatedGraph);
           recalculateRoute(updatedGraph);
           addLog("🔄 Route recalculated after traffic detection");
+
+          // Pan map to traffic zone
+          if (mapRef.current) {
+            mapRef.current.flyTo([targetNode.lat, targetNode.lng], 15, { duration: 1 });
+          }
         }
       }
     } catch (err: any) {
