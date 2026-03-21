@@ -280,7 +280,7 @@ const Demo = () => {
       addLog(`❌ AI image analysis failed: ${err.message || "Unknown error"}`);
     }
 
-    setImageFile(null);
+    // Keep image visible — user can remove with keep/revert options
     if (isFlood) setLoadingFlood(false);
     else setLoadingTraffic(false);
   };
