@@ -189,10 +189,11 @@ const Demo = () => {
         for (const entry of routes) {
           if (entry.node) {
             // node: true → this is a crossroad/intersection, update the node AND all surrounding roads
-            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
-              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-              entry.route.toLowerCase().includes(n.name.toLowerCase())
-            );
+            const routeNorm = stripDiacritics(entry.route);
+            const nodeIdx = updatedGraph.nodes.findIndex((n) => {
+              const nameNorm = stripDiacritics(n.name);
+              return nameNorm.includes(routeNorm) || routeNorm.includes(nameNorm);
+            });
             if (nodeIdx !== -1) {
               const matchedNode = updatedGraph.nodes[nodeIdx];
               const isFlooded = entry.score >= 50;
