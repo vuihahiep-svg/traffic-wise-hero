@@ -1,5 +1,5 @@
 import heroCity from "@/assets/hero-city.jpg";
-import agentsNetwork from "@/assets/ai-agents-network.jpg";
+import agentsNetwork from "@/assets/ai-agents-network.png";
 import floodScene from "@/assets/flood-scene.jpg";
 import dashboardImg from "@/assets/dashboard-interface.jpg";
 import { Link } from "react-router-dom";
