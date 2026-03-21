@@ -240,15 +240,78 @@ const Index = () => (
           <p className="text-on-surface-variant font-body text-lg max-w-2xl mx-auto">Three layers of perception working in concert — converting the city's chaos into structured, actionable intelligence.</p>
         </div>
 
-        <div className="relative rounded-xl overflow-hidden border border-on-surface/10 mb-16 group">
-          <img src={cityEyesEars} alt="AI Data Fusion Command Center — CCTV feeds, audio transcription, and neural processing" className="w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" />
-          <div className="absolute bottom-0 left-0 right-0 p-8 flex items-end justify-between">
+        <div className="relative rounded-xl overflow-hidden border border-on-surface/10 mb-16 bg-surface-container-high p-6 md:p-10">
+          {/* Animated data flow visualization */}
+          <div className="grid grid-cols-3 gap-4 md:gap-6 mb-6">
+            {/* CCTV Panel */}
+            <div className="rounded-lg border border-on-surface/10 bg-surface/80 p-4 relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2 h-2 bg-error rounded-full animate-pulse" />
+                <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant/60">CCTV Feed</span>
+              </div>
+              <div className="aspect-video bg-surface-container rounded flex items-center justify-center relative">
+                <div className="absolute inset-2 border border-primary/30 rounded" />
+                <div className="absolute top-3 left-3 w-6 h-4 border-2 border-primary/60 rounded-sm" />
+                <div className="absolute bottom-4 right-4 w-8 h-5 border-2 border-tertiary/60 rounded-sm" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 border-2 border-error/60 rounded-sm" />
+                <span className="text-primary/40 text-xs font-label">GPT-4o Vision</span>
+              </div>
+              <div className="mt-2 flex gap-1">
+                {[...Array(8)].map((_, i) => <div key={i} className="flex-1 h-1 rounded-full bg-primary/20" style={{ opacity: 0.3 + Math.random() * 0.7 }} />)}
+              </div>
+            </div>
+
+            {/* Central Brain */}
+            <div className="rounded-lg border border-primary/20 bg-surface/80 p-4 relative overflow-hidden flex flex-col items-center justify-center shadow-[0_0_30px_-10px_hsl(var(--primary)/0.3)]">
+              <div className="relative w-24 h-24 md:w-32 md:h-32">
+                <div className="absolute inset-0 border-2 border-dashed border-primary/20 rounded-full animate-[spin_20s_linear_infinite]" />
+                <div className="absolute inset-3 border border-tertiary/20 rounded-full animate-[spin_15s_linear_infinite_reverse]" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-10 h-10 md:w-14 md:h-14 bg-primary/10 border border-primary/30 rounded-full flex items-center justify-center shadow-[0_0_20px_hsl(var(--primary)/0.2)]">
+                    <span className="text-primary text-lg md:text-2xl">🧠</span>
+                  </div>
+                </div>
+                {/* Connection dots */}
+                {[0, 60, 120, 180, 240, 300].map((deg) => (
+                  <div key={deg} className="absolute w-2 h-2 bg-primary/60 rounded-full" style={{ top: `${50 - 45 * Math.cos(deg * Math.PI / 180)}%`, left: `${50 + 45 * Math.sin(deg * Math.PI / 180)}%`, transform: 'translate(-50%,-50%)' }} />
+                ))}
+              </div>
+              <span className="text-xs font-label font-bold uppercase tracking-widest text-primary/80 mt-3">Data Fusion Engine</span>
+              <span className="text-[10px] text-on-surface-variant/40 font-label mt-1">Multi-Agent Consensus</span>
+            </div>
+
+            {/* Audio Panel */}
+            <div className="rounded-lg border border-on-surface/10 bg-surface/80 p-4 relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2 h-2 bg-tertiary rounded-full animate-pulse" />
+                <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant/60">FM Radio</span>
+              </div>
+              <div className="aspect-video bg-surface-container rounded flex items-center justify-center relative overflow-hidden">
+                {/* Audio waveform bars */}
+                <div className="flex items-center gap-[2px] h-full py-3">
+                  {[...Array(24)].map((_, i) => (
+                    <div key={i} className="w-1 bg-tertiary/50 rounded-full" style={{ height: `${20 + Math.sin(i * 0.8) * 30 + Math.random() * 25}%`, animationDelay: `${i * 80}ms` }} />
+                  ))}
+                </div>
+                <span className="absolute bottom-2 text-[9px] text-tertiary/50 font-label">Whisper STT</span>
+              </div>
+              <div className="mt-2 space-y-1">
+                <div className="h-1 rounded-full bg-tertiary/15 w-full" />
+                <div className="h-1 rounded-full bg-tertiary/10 w-3/4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom status bar */}
+          <div className="flex items-center justify-between px-4 py-3 bg-surface/60 rounded-lg border border-on-surface/5">
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 bg-tertiary rounded-full animate-pulse shadow-[0_0_8px_hsl(var(--tertiary))]" />
               <span className="text-xs font-label font-bold uppercase tracking-widest text-on-surface/80">Multi-Source Fusion Active</span>
             </div>
-            <span className="text-[10px] font-label text-on-surface-variant/50 uppercase tracking-wider">6 streams · 3 agents · real-time</span>
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-label text-on-surface-variant/50 uppercase tracking-wider">CCTV · Radio · News · Social · Weather · Sensors</span>
+              <span className="text-[10px] font-label text-tertiary uppercase tracking-wider font-bold">● LIVE</span>
+            </div>
           </div>
         </div>
 
