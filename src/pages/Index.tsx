@@ -39,7 +39,7 @@ const Index = () => (
       </div>
       <div className="relative z-10 max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div className="space-y-8 animate-fade-up">
-          <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95]">
+          <h1 className="font-headline text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.95]">
             AI-NAVIGATE:<br /><span className="text-gradient">PREDICTING THE UNPREDICTABLE.</span>
           </h1>
           <p className="font-body text-xl text-on-surface-variant max-w-xl">
