@@ -44,7 +44,7 @@ const Index = () => (
             AI-NAVIGATE:<br /><span className="text-gradient">PREDICTING THE UNPREDICTABLE.</span>
           </h1>
           <p className="font-body text-xl text-on-surface-variant max-w-xl">
-            Traditional navigation tells you where a road is; we tell you if it's actually usable. Real-time predictive intelligence for Ho Chi Minh City.
+            Traditional navigation tells you where a road is; we tell you if it's actually usable. Real-time predictive intelligence for urban mobility.
           </p>
           <div className="flex gap-4 flex-wrap">
             <Link to="/demo" className="bg-primary-container text-primary-container-foreground px-8 py-4 rounded font-headline font-bold uppercase tracking-widest hover:brightness-110 transition-all active:scale-95">
@@ -96,12 +96,12 @@ const Index = () => (
             The Three Invisible Walls:<br /><span className="text-primary">Why Current Systems Fail.</span>
           </h2>
           <p className="font-body text-lg text-on-surface-variant max-w-2xl">
-            Urban mobility is broken by factors that standard GPS cannot see. Ho Chi Minh City loses billions annually to these phantom obstacles.
+            Urban mobility is broken by factors that standard GPS cannot see. Cities lose billions annually to these phantom obstacles.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: "⚠", color: "error", title: "Phantom Jams", desc: "Congestion that appears without cause, triggered by minute human braking patterns and amplified by outdated algorithms." },
+            { icon: "⚠", color: "error", title: "The Human Factor", desc: "Phantom jams—unpredictable congestion at intersections, traffic accidents, red-light queuing, and chain-reaction braking that no standard algorithm anticipates." },
             { icon: "🌊", color: "primary", title: "Environmental Randomness", desc: "Flash floods, fallen trees, and local event closures that happen in minutes—faster than typical data feeds can update." },
             { icon: "🔀", color: "tertiary", title: "Braess's Paradox", desc: "The counter-intuitive reality where adding a road actually increases traffic time by creating inefficient selfish routing." },
           ].map((item) => (
