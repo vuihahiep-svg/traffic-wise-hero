@@ -119,26 +119,47 @@ const Index = () => (
     </Section>
 
     {/* SOLUTION */}
-    <Section id="solution" className="py-32 relative">
+    <Section id="solution" className="py-32 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-8 relative z-10">
-        <div className="text-center mb-24">
-          <h2 className="font-headline text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase">
-            Turning Chaos into a<br /><span className="text-gradient">Single, Safe Route.</span>
-          </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24">
+          <div className="space-y-8">
+            <h2 className="font-headline text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.95]">
+              Turning Chaos into a<br /><span className="text-gradient">Single, Safe Route.</span>
+            </h2>
+            <p className="text-on-surface-variant font-body text-lg max-w-lg">
+              While every road turns red, our AI finds the one clear path — simulating thousands of traffic flows in real-time to navigate through congestion, floods, and accidents.
+            </p>
+            <div className="flex gap-3 flex-wrap">
+              <span className="px-4 py-1.5 bg-error/10 text-error text-xs font-bold uppercase tracking-widest rounded">Congested</span>
+              <span className="px-4 py-1.5 bg-[hsl(45,90%,50%)]/10 text-[hsl(45,90%,40%)] text-xs font-bold uppercase tracking-widest rounded">Moderate</span>
+              <span className="px-4 py-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest rounded">AI Optimal Route</span>
+            </div>
+          </div>
+          <div className="relative group">
+            <div className="absolute -inset-6 bg-primary/15 blur-3xl rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-700" />
+            <img src={trafficSimRoute} alt="Traffic simulation showing optimal route through congested city network" className="relative rounded-md border border-on-surface/10 glow-blue w-full" />
+            <div className="absolute bottom-4 left-4 right-4 bg-surface/80 backdrop-blur-md rounded px-4 py-3 border border-on-surface/10">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-primary font-headline font-bold uppercase tracking-widest">↗ Clear Route Found</span>
+                <span className="text-on-surface-variant font-label">ETA saved: <span className="text-tertiary font-bold">23 min</span></span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             { icon: "👁", label: "The Environment Observer", desc: "Ingests CCTV, News, and Weather data to build a real-time semantic understanding of every street corner.", accent: "primary" },
             { icon: "🧭", label: "The Smart Navigator", desc: "Hyper-precise pathfinding that accounts for predicted water levels and traffic density hours before it peaks.", accent: "tertiary" },
             { icon: "👥", label: "The Multi-Agent Simulator", desc: "Simulates thousands of possible traffic flows simultaneously to find the most efficient macro-solution for the whole city.", accent: "secondary" },
           ].map((s) => (
-            <div key={s.label} className="flex flex-col items-center text-center space-y-6">
-              <div className={`w-32 h-32 rounded-full border border-${s.accent}/30 flex items-center justify-center relative`}>
-                <div className={`absolute inset-0 bg-${s.accent}/5 animate-pulse-glow rounded-full`} />
-                <span className="text-5xl">{s.icon}</span>
+            <div key={s.label} className="p-6 bg-surface-container-low rounded-md border border-on-surface/5 flex gap-5 items-start hover:translate-y-[-4px] transition-transform duration-300">
+              <div className={`shrink-0 w-14 h-14 rounded-full bg-${s.accent}/10 flex items-center justify-center text-2xl`}>
+                {s.icon}
               </div>
-              <h4 className="font-headline text-xl font-bold tracking-tight">{s.label}</h4>
-              <p className="text-on-surface-variant text-sm px-4">{s.desc}</p>
+              <div>
+                <h4 className="font-headline text-lg font-bold tracking-tight mb-2">{s.label}</h4>
+                <p className="text-on-surface-variant text-sm leading-relaxed">{s.desc}</p>
+              </div>
             </div>
           ))}
         </div>
