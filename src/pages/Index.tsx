@@ -201,10 +201,7 @@ const Index = () => (
 
           <div className="relative sticky top-32">
             <div className="absolute -top-10 -right-10 w-64 h-64 bg-primary/10 blur-3xl rounded-full -z-0" />
-            <img src={agentsNetwork} alt="AI Agents network architecture diagram" className="rounded-md border border-on-surface/10 glow-blue max-w-full relative z-10" />
-            <p className="text-center text-xs text-on-surface-variant/50 mt-4 font-label uppercase tracking-widest">
-              Replace <code className="text-primary/60">src/assets/ai-agents-network.jpg</code> to change image
-            </p>
+            <img src={agentsNetwork} alt="Multi-Agent City Brain System Architecture" className="rounded-md border border-on-surface/10 glow-blue max-w-full relative z-10" />
           </div>
         </div>
       </div>
