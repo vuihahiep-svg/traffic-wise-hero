@@ -533,7 +533,7 @@ const Demo = () => {
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
               </div>
-              <button onClick={handleTrafficReport} disabled={loadingTraffic || !audioText.trim()} className="w-full mt-2 bg-destructive/15 text-error py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+              <button onClick={() => handleTrafficReport()} disabled={loadingTraffic || !audioText.trim()} className="w-full mt-2 bg-destructive/15 text-error py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
                 {loadingTraffic ? "Analyzing..." : "Analyze with AI"}
               </button>
             </div>
