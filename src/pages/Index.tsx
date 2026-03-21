@@ -1,6 +1,7 @@
 import heroCity from "@/assets/hero-city.jpg";
 import trafficSimRoute from "@/assets/traffic-simulation-route.jpg";
 import agentsNetwork from "@/assets/ai-agents-network.png";
+import cityEyesEars from "@/assets/city-eyes-ears.jpg";
 import floodScene from "@/assets/flood-scene.jpg";
 import dashboardImg from "@/assets/dashboard-interface.jpg";
 import { Link } from "react-router-dom";
