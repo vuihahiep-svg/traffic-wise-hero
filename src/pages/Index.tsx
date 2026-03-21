@@ -235,33 +235,50 @@ const Index = () => (
       </div>
     </Section>
 
-    {/* MARKET */}
+    {/* MARKET – TAM / SAM / SOM */}
     <Section id="market" className="py-32">
       <div className="max-w-7xl mx-auto px-8">
-        <div className="text-center mb-24">
-          <h2 className="font-headline text-5xl font-black tracking-tighter uppercase mb-4">
-            A $15 Billion Opportunity:<br /><span className="text-primary">Starting Local, Scaling Regional.</span>
+        <div className="text-center mb-20">
+          <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter uppercase mb-4">
+            Market Opportunity:<br /><span className="text-primary">TAM / SAM / SOM.</span>
           </h2>
+          <p className="text-on-surface-variant max-w-2xl mx-auto font-body">
+            Our market strategy starts where the problem is most urgent. By proving our Panoramic solution in HCMC first, we create a clear path to scale across the $15B+ Southeast Asian market.
+          </p>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-12">
-          <div className="relative w-80 h-80 flex items-center justify-center">
-            <div className="absolute inset-0 border border-primary/20 rounded-full animate-[pulse_4s_infinite]" />
-            <div className="absolute inset-8 border border-primary/40 rounded-full" />
-            <div className="absolute inset-16 border border-primary/60 rounded-full" />
-            <div className="absolute inset-24 bg-primary/10 border border-primary rounded-full flex items-center justify-center flex-col">
-              <div className="text-2xl font-black font-headline">SOM</div>
-              <div className="text-sm font-bold">$200M</div>
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-16">
+          {/* Bullseye concentric circles */}
+          <div className="relative w-[340px] h-[340px] flex items-center justify-center flex-shrink-0">
+            {/* TAM – outermost */}
+            <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/25 flex items-start justify-center pt-6">
+              <span className="bg-surface px-3 py-1 rounded text-xs font-headline font-bold uppercase tracking-widest text-primary/70">TAM $15B+</span>
             </div>
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-center">
-              <div className="text-on-surface-variant/50 font-headline text-sm uppercase tracking-widest">TAM (SEA Market)</div>
-              <div className="text-2xl font-black">$15B+</div>
+            {/* SAM – middle */}
+            <div className="absolute inset-[52px] rounded-full border-2 border-primary/40 flex items-start justify-center pt-5">
+              <span className="bg-surface px-3 py-1 rounded text-xs font-headline font-bold uppercase tracking-widest text-primary/90">SAM $1B+</span>
+            </div>
+            {/* SOM – center */}
+            <div className="absolute inset-[108px] rounded-full bg-primary/15 border-2 border-primary flex items-center justify-center flex-col">
+              <span className="font-headline font-black text-2xl text-primary">SOM</span>
+              <span className="font-headline font-bold text-sm text-on-surface">$200M+</span>
             </div>
           </div>
+
+          {/* Market descriptions */}
           <div className="max-w-md space-y-6">
-            <p className="text-on-surface-variant font-body">
-              Focusing initially on Ho Chi Minh City and Hanoi, before scaling to the wider Southeast Asian corridor where infrastructure development struggles to keep pace with population growth.
-            </p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="p-5 bg-surface-container rounded-md border-l-4 border-primary/30">
+              <h4 className="font-headline font-bold text-sm uppercase tracking-widest text-primary mb-1">TAM — $15B+</h4>
+              <p className="text-sm text-on-surface-variant">Southeast Asian Digital Mobility Market. Every major city faces flooding and traffic chaos.</p>
+            </div>
+            <div className="p-5 bg-surface-container rounded-md border-l-4 border-primary/50">
+              <h4 className="font-headline font-bold text-sm uppercase tracking-widest text-primary mb-1">SAM — $1B+</h4>
+              <p className="text-sm text-on-surface-variant">Vietnam's Logistics & Smart Infrastructure sector, rapidly modernizing with government backing.</p>
+            </div>
+            <div className="p-5 bg-surface-container rounded-md border-l-4 border-primary">
+              <h4 className="font-headline font-bold text-sm uppercase tracking-widest text-primary mb-1">SOM — $200M+</h4>
+              <p className="text-sm text-on-surface-variant">Urban hubs—HCMC & Hanoi—where the problem is most urgent and our initial beachhead.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="p-4 border border-on-surface/5 bg-surface-container rounded">
                 <div className="text-tertiary font-headline font-bold text-xl">12%</div>
                 <div className="text-[10px] uppercase text-on-surface-variant/50">Avg. Annual Traffic Growth</div>
