@@ -101,7 +101,7 @@ const Index = () => (
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: "⚠", color: "error", title: "Phantom Jams", desc: "Congestion that appears without cause, triggered by minute human braking patterns and amplified by outdated algorithms." },
+            { icon: "⚠", color: "error", title: "The Human Factor", desc: "Phantom jams—unpredictable congestion at intersections, traffic accidents, red-light queuing, and chain-reaction braking that no standard algorithm anticipates." },
             { icon: "🌊", color: "primary", title: "Environmental Randomness", desc: "Flash floods, fallen trees, and local event closures that happen in minutes—faster than typical data feeds can update." },
             { icon: "🔀", color: "tertiary", title: "Braess's Paradox", desc: "The counter-intuitive reality where adding a road actually increases traffic time by creating inefficient selfish routing." },
           ].map((item) => (
