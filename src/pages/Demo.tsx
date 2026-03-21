@@ -45,6 +45,8 @@ const Demo = () => {
   const [bestPath, setBestPath] = useState<{ path: string[]; edgeIds: string[]; totalWeight: number } | null>(null);
   const [audioText, setAudioText] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [preAnalysisGraph, setPreAnalysisGraph] = useState<CityGraph | null>(null);
+  const [showRemoveOptions, setShowRemoveOptions] = useState(false);
   const [log, setLog] = useState<string[]>([]);
 
   const [loadingRoute, setLoadingRoute] = useState(false);
@@ -188,6 +190,9 @@ const Demo = () => {
     if (isFlood) setLoadingFlood(true);
     else setLoadingTraffic(true);
 
+    // Save graph snapshot before analysis for revert option
+    setPreAnalysisGraph(JSON.parse(JSON.stringify(graph)));
+
     addLog(`📸 AI analyzing image for ${isFlood ? "flooding" : "traffic"}...`);
 
     try {
@@ -275,7 +280,7 @@ const Demo = () => {
       addLog(`❌ AI image analysis failed: ${err.message || "Unknown error"}`);
     }
 
-    setImageFile(null);
+    // Keep image visible — user can remove with keep/revert options
     if (isFlood) setLoadingFlood(false);
     else setLoadingTraffic(false);
   };
@@ -451,14 +456,52 @@ const Demo = () => {
                       className="w-full h-32 object-cover"
                     />
                     <button
-                      onClick={() => setImageFile(null)}
+                      onClick={() => {
+                        if (preAnalysisGraph) {
+                          setShowRemoveOptions(true);
+                        } else {
+                          setImageFile(null);
+                        }
+                      }}
                       className="absolute top-1 right-1 bg-surface/80 text-on-surface-variant hover:text-error rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold backdrop-blur-sm transition-colors active:scale-90"
                       title="Remove image"
                     >✕</button>
                   </div>
-                  <button onClick={handleImageAnalysis} disabled={loadingFlood || loadingTraffic} className="w-full bg-tertiary/20 text-tertiary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
-                    {loadingFlood || loadingTraffic ? "Analyzing..." : `Analyze for ${analysisMode === "flood" ? "Flood" : "Traffic"}`}
-                  </button>
+                  {showRemoveOptions && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          addLog("🗑️ Image removed — scores kept");
+                          setImageFile(null);
+                          setPreAnalysisGraph(null);
+                          setShowRemoveOptions(false);
+                        }}
+                        className="flex-1 bg-tertiary/20 text-tertiary py-1.5 rounded font-headline font-bold uppercase tracking-widest text-[10px] active:scale-95 transition-transform"
+                      >
+                        Keep Scores
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (preAnalysisGraph) {
+                            setGraph(preAnalysisGraph);
+                            recalculateRoute(preAnalysisGraph);
+                            addLog("↩️ Image removed — scores reverted");
+                          }
+                          setImageFile(null);
+                          setPreAnalysisGraph(null);
+                          setShowRemoveOptions(false);
+                        }}
+                        className="flex-1 bg-error/20 text-error py-1.5 rounded font-headline font-bold uppercase tracking-widest text-[10px] active:scale-95 transition-transform"
+                      >
+                        Revert Scores
+                      </button>
+                    </div>
+                  )}
+                  {!showRemoveOptions && (
+                    <button onClick={handleImageAnalysis} disabled={loadingFlood || loadingTraffic} className="w-full bg-tertiary/20 text-tertiary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+                      {loadingFlood || loadingTraffic ? "Analyzing..." : `Analyze for ${analysisMode === "flood" ? "Flood" : "Traffic"}`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
