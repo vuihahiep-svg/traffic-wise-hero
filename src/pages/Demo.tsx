@@ -292,9 +292,11 @@ const Demo = () => {
         const updatedGraph = { ...graph, edges: [...graph.edges], nodes: [...graph.nodes] };
 
         for (const road of data.result.roads) {
-          const edgeIdx = updatedGraph.edges.findIndex((e) =>
-            e.name.toLowerCase().includes(road.name.toLowerCase()) || road.name.toLowerCase().includes(e.name.toLowerCase())
-          );
+          const roadNorm = stripDiacritics(road.name);
+          const edgeIdx = updatedGraph.edges.findIndex((e) => {
+            const nameNorm = stripDiacritics(e.name);
+            return nameNorm.includes(roadNorm) || roadNorm.includes(nameNorm);
+          });
           if (edgeIdx !== -1) {
             const oldWeight = updatedGraph.edges[edgeIdx].weight;
             updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: road.severity };
