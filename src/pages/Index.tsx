@@ -39,7 +39,7 @@ const Index = () => (
       </div>
       <div className="relative z-10 max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div className="space-y-8 animate-fade-up">
-          <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95]">
+          <h1 className="font-headline text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.95]">
             AI-NAVIGATE:<br /><span className="text-gradient">PREDICTING THE UNPREDICTABLE.</span>
           </h1>
           <p className="font-body text-xl text-on-surface-variant max-w-xl">
@@ -216,7 +216,7 @@ const Index = () => (
         <div className="flex flex-col lg:flex-row gap-16 items-center">
           <div className="flex-1 space-y-8">
             <h2 className="font-headline text-5xl font-black tracking-tighter uppercase leading-tight">
-              From Prediction to Strategy:<br /><span className="text-gradient">The "Toàn Cảnh" Dashboard.</span>
+              From Prediction to Strategy:<br /><span className="text-gradient">The Panoramic Dashboard.</span>
             </h2>
             <p className="font-body text-lg text-on-surface-variant">
               A bird's eye view for city planners. Transform raw traffic data into high-level urban strategy reports automatically.
@@ -235,33 +235,50 @@ const Index = () => (
       </div>
     </Section>
 
-    {/* MARKET */}
+    {/* MARKET – TAM / SAM / SOM */}
     <Section id="market" className="py-32">
       <div className="max-w-7xl mx-auto px-8">
-        <div className="text-center mb-24">
-          <h2 className="font-headline text-5xl font-black tracking-tighter uppercase mb-4">
-            A $15 Billion Opportunity:<br /><span className="text-primary">Starting Local, Scaling Regional.</span>
+        <div className="text-center mb-20">
+          <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter uppercase mb-4">
+            Market Opportunity:<br /><span className="text-primary">TAM / SAM / SOM.</span>
           </h2>
+          <p className="text-on-surface-variant max-w-2xl mx-auto font-body">
+            Our market strategy starts where the problem is most urgent. By proving our Panoramic solution in HCMC first, we create a clear path to scale across the $15B+ Southeast Asian market.
+          </p>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-12">
-          <div className="relative w-80 h-80 flex items-center justify-center">
-            <div className="absolute inset-0 border border-primary/20 rounded-full animate-[pulse_4s_infinite]" />
-            <div className="absolute inset-8 border border-primary/40 rounded-full" />
-            <div className="absolute inset-16 border border-primary/60 rounded-full" />
-            <div className="absolute inset-24 bg-primary/10 border border-primary rounded-full flex items-center justify-center flex-col">
-              <div className="text-2xl font-black font-headline">SOM</div>
-              <div className="text-sm font-bold">$200M</div>
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-16">
+          {/* Bullseye concentric circles */}
+          <div className="relative w-[340px] h-[340px] flex items-center justify-center flex-shrink-0">
+            {/* TAM – outermost */}
+            <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/25 flex items-start justify-center pt-6">
+              <span className="bg-surface px-3 py-1 rounded text-xs font-headline font-bold uppercase tracking-widest text-primary/70">TAM $15B+</span>
             </div>
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-center">
-              <div className="text-on-surface-variant/50 font-headline text-sm uppercase tracking-widest">TAM (SEA Market)</div>
-              <div className="text-2xl font-black">$15B+</div>
+            {/* SAM – middle */}
+            <div className="absolute inset-[52px] rounded-full border-2 border-primary/40 flex items-start justify-center pt-5">
+              <span className="bg-surface px-3 py-1 rounded text-xs font-headline font-bold uppercase tracking-widest text-primary/90">SAM $1B+</span>
+            </div>
+            {/* SOM – center */}
+            <div className="absolute inset-[108px] rounded-full bg-primary/15 border-2 border-primary flex items-center justify-center flex-col">
+              <span className="font-headline font-black text-2xl text-primary">SOM</span>
+              <span className="font-headline font-bold text-sm text-on-surface">$200M+</span>
             </div>
           </div>
+
+          {/* Market descriptions */}
           <div className="max-w-md space-y-6">
-            <p className="text-on-surface-variant font-body">
-              Focusing initially on Ho Chi Minh City and Hanoi, before scaling to the wider Southeast Asian corridor where infrastructure development struggles to keep pace with population growth.
-            </p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="p-5 bg-surface-container rounded-md border-l-4 border-primary/30">
+              <h4 className="font-headline font-bold text-sm uppercase tracking-widest text-primary mb-1">TAM — $15B+</h4>
+              <p className="text-sm text-on-surface-variant">Southeast Asian Digital Mobility Market. Every major city faces flooding and traffic chaos.</p>
+            </div>
+            <div className="p-5 bg-surface-container rounded-md border-l-4 border-primary/50">
+              <h4 className="font-headline font-bold text-sm uppercase tracking-widest text-primary mb-1">SAM — $1B+</h4>
+              <p className="text-sm text-on-surface-variant">Vietnam's Logistics & Smart Infrastructure sector, rapidly modernizing with government backing.</p>
+            </div>
+            <div className="p-5 bg-surface-container rounded-md border-l-4 border-primary">
+              <h4 className="font-headline font-bold text-sm uppercase tracking-widest text-primary mb-1">SOM — $200M+</h4>
+              <p className="text-sm text-on-surface-variant">Urban hubs—HCMC & Hanoi—where the problem is most urgent and our initial beachhead.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="p-4 border border-on-surface/5 bg-surface-container rounded">
                 <div className="text-tertiary font-headline font-bold text-xl">12%</div>
                 <div className="text-[10px] uppercase text-on-surface-variant/50">Avg. Annual Traffic Growth</div>
@@ -300,25 +317,113 @@ const Index = () => (
     {/* ROADMAP */}
     <Section id="roadmap" className="py-32">
       <div className="max-w-7xl mx-auto px-8">
-        <h2 className="font-headline text-4xl font-black tracking-tighter uppercase mb-20 text-center">Technical Roadmap.</h2>
-        <div className="relative py-12">
-          <div className="absolute top-1/2 left-0 w-full h-1 bg-on-surface/5 -translate-y-1/2 hidden md:block" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <h2 className="font-headline text-4xl font-black tracking-tighter uppercase mb-6 text-center">Technical Roadmap.</h2>
+        <p className="text-on-surface-variant text-center max-w-2xl mx-auto mb-20 font-body">
+          A phased approach that balances cost-efficiency with accuracy improvement at every stage.
+        </p>
+
+        {/* Timeline visual */}
+        <div className="relative">
+          {/* Connecting line */}
+          <div className="absolute top-8 left-0 w-full h-0.5 bg-outline-variant/30 hidden lg:block" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {[
-              { n: "1", title: "Phase: Precision", color: "primary", items: ["High-res Node-Edge mapping", "Core Environment Observer MVP", "Launch in HCMC Center"] },
-              { n: "2", title: "Phase: Intelligence", color: "tertiary", items: ["Multi-Agent Simulation beta", "Dashboard for B2B rollout", "Regional Expansion: Hanoi"] },
-              { n: "3", title: "Phase: Ecosystem", color: "secondary", items: ["API for Autonomous Vehicles", "SEA Market Launch (Bangkok, Jakarta)", "City Brain Integration"] },
+              {
+                n: "1",
+                title: "Phase: Precision",
+                timeline: "Months 0–6",
+                cost: "$50K–$80K",
+                accuracy: "70% → 82%",
+                color: "primary",
+                items: [
+                  "High-resolution Node-Edge mapping of HCMC center",
+                  "Core Environment Observer MVP (CCTV + weather feeds)",
+                  "Baseline Dijkstra routing with manual weight tuning",
+                ],
+                improvement: "Manual data labeling + structured traffic feeds establish ground-truth baselines for model training.",
+              },
+              {
+                n: "2",
+                title: "Phase: Intelligence",
+                timeline: "Months 6–14",
+                cost: "$120K–$200K",
+                accuracy: "82% → 93%",
+                color: "tertiary",
+                items: [
+                  "Multi-Agent Simulation beta with LLM-powered analysis",
+                  "Panoramic Dashboard for B2B rollout",
+                  "Regional expansion: Hanoi pilot",
+                ],
+                improvement: "LLM vision + audio agents replace manual inputs; feedback loops retrain models weekly on real outcomes.",
+              },
+              {
+                n: "3",
+                title: "Phase: Ecosystem",
+                timeline: "Months 14–24",
+                cost: "$300K–$500K",
+                accuracy: "93% → 97%+",
+                color: "secondary",
+                items: [
+                  "API for Autonomous Vehicles & fleet partners",
+                  "SEA market launch (Bangkok, Jakarta)",
+                  "City Brain integration & government data sharing",
+                ],
+                improvement: "Federated learning across cities; millions of daily data points create self-improving prediction loops.",
+              },
             ].map((p) => (
-              <div key={p.n} className="relative bg-surface border border-on-surface/5 p-8 rounded-md pt-16">
-                <div className={`absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-${p.color} rounded-full flex items-center justify-center font-bold text-surface border-4 border-surface`}>
+              <div key={p.n} className="relative bg-surface border border-on-surface/5 rounded-md pt-16 pb-8 px-8 flex flex-col">
+                {/* Phase circle */}
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-${p.color} rounded-full flex items-center justify-center font-black text-xl text-surface border-4 border-surface font-headline z-10`}>
                   {p.n}
                 </div>
-                <h5 className={`font-headline font-bold uppercase mb-4 text-${p.color}`}>{p.title}</h5>
-                <ul className="text-xs space-y-2 text-on-surface-variant/60 font-label">
-                  {p.items.map((i) => <li key={i}>• {i}</li>)}
+
+                <h5 className={`font-headline font-bold uppercase mb-1 text-${p.color}`}>{p.title}</h5>
+                <div className="text-xs text-on-surface-variant/50 font-label uppercase tracking-widest mb-4">{p.timeline}</div>
+
+                {/* Cost & Accuracy badges */}
+                <div className="flex gap-3 mb-6">
+                  <div className="px-3 py-1.5 bg-surface-container-high rounded text-xs font-bold font-headline">
+                    <span className="text-on-surface-variant/50 mr-1">Cost:</span>
+                    <span className="text-on-surface">{p.cost}</span>
+                  </div>
+                  <div className="px-3 py-1.5 bg-surface-container-high rounded text-xs font-bold font-headline">
+                    <span className="text-on-surface-variant/50 mr-1">Accuracy:</span>
+                    <span className={`text-${p.color}`}>{p.accuracy}</span>
+                  </div>
+                </div>
+
+                {/* Deliverables */}
+                <ul className="text-xs space-y-2 text-on-surface-variant/70 font-label mb-6 flex-1">
+                  {p.items.map((i) => <li key={i} className="flex gap-2"><span className={`text-${p.color} mt-0.5`}>▸</span>{i}</li>)}
                 </ul>
+
+                {/* Accuracy improvement note */}
+                <div className={`border-t border-${p.color}/20 pt-4`}>
+                  <div className="text-[10px] uppercase tracking-widest text-on-surface-variant/40 font-label mb-1">How Accuracy Improves</div>
+                  <p className="text-xs text-on-surface-variant/60">{p.improvement}</p>
+                </div>
               </div>
             ))}
+          </div>
+
+          {/* Progress bar visual */}
+          <div className="mt-16 bg-surface-container rounded-md p-6 border border-on-surface/5">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant/50">Accuracy Trajectory</span>
+              <span className="text-xs font-headline font-bold text-primary">Target: 97%+</span>
+            </div>
+            <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden relative">
+              <div className="absolute inset-y-0 left-0 w-[30%] bg-primary rounded-full" />
+              <div className="absolute inset-y-0 left-[30%] w-[32%] bg-tertiary rounded-full" />
+              <div className="absolute inset-y-0 left-[62%] w-[35%] bg-secondary rounded-full" />
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] font-label text-on-surface-variant/40 uppercase tracking-widest">
+              <span>70% Baseline</span>
+              <span>82%</span>
+              <span>93%</span>
+              <span>97%+</span>
+            </div>
           </div>
         </div>
       </div>
