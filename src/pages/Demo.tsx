@@ -582,22 +582,64 @@ const Demo = () => {
               </button>
             </div>
 
-            {/* Audio Recording Analysis */}
+            {/* Audio Analysis */}
             <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
-              {loadingAudio && <LoadingOverlay label="Processing transcript..." />}
+              {loadingAudio && <LoadingOverlay label="Processing audio..." />}
               <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-secondary">Audio Analysis</h3>
-              <p className="text-[10px] text-on-surface-variant mb-3">Record via microphone → Speech-to-Text → AI Correction → Traffic Analysis</p>
+              <p className="text-[10px] text-on-surface-variant mb-3">Speech-to-Text → AI Correction → Traffic Analysis</p>
               
-              <button
-                onClick={toggleAudioRecording}
-                className={`w-full py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                  isRecordingAudio
-                    ? "bg-error/20 text-error animate-pulse"
-                    : "bg-secondary/20 text-secondary"
-                }`}
-              >
-                {isRecordingAudio ? <><MicOff className="w-4 h-4" /> Stop Recording</> : <><Mic className="w-4 h-4" /> Start Recording</>}
-              </button>
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={() => setAudioMode("mic")}
+                  className={`flex-1 py-1.5 rounded text-xs font-headline uppercase tracking-widest transition-all active:scale-95 ${audioMode === "mic" ? "bg-secondary/20 text-secondary font-bold" : "bg-on-surface/5 text-on-surface-variant"}`}
+                >🎙️ Microphone</button>
+                <button
+                  onClick={() => setAudioMode("file")}
+                  className={`flex-1 py-1.5 rounded text-xs font-headline uppercase tracking-widest transition-all active:scale-95 ${audioMode === "file" ? "bg-secondary/20 text-secondary font-bold" : "bg-on-surface/5 text-on-surface-variant"}`}
+                >📁 File Upload</button>
+              </div>
+
+              {audioMode === "mic" ? (
+                <button
+                  onClick={toggleAudioRecording}
+                  className={`w-full py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                    isRecordingAudio
+                      ? "bg-error/20 text-error animate-pulse"
+                      : "bg-secondary/20 text-secondary"
+                  }`}
+                >
+                  {isRecordingAudio ? <><MicOff className="w-4 h-4" /> Stop Recording</> : <><Mic className="w-4 h-4" /> Start Recording</>}
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => {
+                      setAudioFile(e.target.files?.[0] || null);
+                      setAudioTranscript("");
+                      setCorrectedText("");
+                    }}
+                    className="w-full text-xs text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-secondary/20 file:text-secondary"
+                  />
+                  {audioFile && (
+                    <div className="flex items-center gap-2 p-2 bg-secondary/10 rounded text-xs">
+                      <Upload className="w-3 h-3 text-secondary" />
+                      <span className="text-on-surface truncate">{audioFile.name}</span>
+                      <button onClick={() => { setAudioFile(null); setAudioTranscript(""); setCorrectedText(""); }} className="ml-auto text-on-surface-variant hover:text-error text-xs">✕</button>
+                    </div>
+                  )}
+                  {audioFile && !audioTranscript && (
+                    <button
+                      onClick={handleAudioFileUpload}
+                      disabled={loadingAudio}
+                      className="w-full bg-secondary/20 text-secondary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      {loadingAudio ? "Processing..." : "Process Audio File"}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {audioTranscript && (
                 <div className="mt-3 space-y-2">
@@ -605,7 +647,7 @@ const Demo = () => {
                     <div className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">Raw Transcript:</div>
                     <div className="text-on-surface">{audioTranscript}</div>
                   </div>
-                  {!correctedText && (
+                  {!correctedText && audioMode === "mic" && (
                     <button
                       onClick={handleProcessTranscript}
                       disabled={loadingAudio || isRecordingAudio}
