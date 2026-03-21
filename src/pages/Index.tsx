@@ -1,4 +1,5 @@
 import heroCity from "@/assets/hero-city.jpg";
+import agentsNetwork from "@/assets/ai-agents-network.jpg";
 import floodScene from "@/assets/flood-scene.jpg";
 import dashboardImg from "@/assets/dashboard-interface.jpg";
 import { Link } from "react-router-dom";
@@ -139,6 +140,72 @@ const Index = () => (
               <p className="text-on-surface-variant text-sm px-4">{s.desc}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </Section>
+
+    {/* AI AGENTS */}
+    <Section className="py-32 bg-surface-container">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="text-center mb-20">
+          <span className="text-tertiary font-label text-sm font-bold uppercase tracking-widest block mb-4">Multi-Agent Architecture</span>
+          <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter uppercase mb-6">
+            Four Specialized Agents,<br /><span className="text-gradient">One Unified Intelligence.</span>
+          </h2>
+          <p className="text-on-surface-variant max-w-2xl mx-auto font-body">
+            Each agent is a domain expert. Together, they form a collaborative intelligence network that sees what no single system can.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          <div className="space-y-6">
+            {[
+              {
+                icon: "🗄️", num: "01", title: "Insight Agent", subtitle: "Private Database Mining",
+                desc: "Performs Text-to-SQL (via LlamaIndex & SQLAlchemy) on internal historical traffic records to understand how the city reacts to specific weather patterns, enabling predictive environmental modeling.",
+                accent: "primary",
+              },
+              {
+                icon: "📡", num: "02", title: "Media Agent", subtitle: "Multimodal Content Analysis",
+                desc: "\"Listens\" to live FM traffic radio using OpenAI Whisper and analyzes city CCTV feeds using GPT-4o-vision to detect rising flood levels and traffic incidents in real-time.",
+                accent: "tertiary",
+              },
+              {
+                icon: "🔍", num: "03", title: "Query Agent", subtitle: "Precise Information Search",
+                desc: "Performs deep, targeted crawls on social media (Zalo/X) and local news using Firecrawl & Tavily API to find \"Ghost Variables\" — sudden accidents or localized flash floods that standard maps miss.",
+                accent: "secondary",
+              },
+              {
+                icon: "📋", num: "04", title: "Report Agent", subtitle: "Intelligent Report Generation",
+                desc: "Collects consolidated consensus from the ForumEngine and uses a template engine (Jinja2) to render complex simulations into professional, actionable PDF/HTML \"Panoramic\" strategies for drivers and city planners.",
+                accent: "primary",
+              },
+            ].map((agent) => (
+              <div key={agent.num} className="group relative p-6 bg-surface-container-low rounded-md border border-on-surface/5 hover:border-primary/30 transition-all duration-300 hover:translate-x-2">
+                <div className="flex gap-5">
+                  <div className="shrink-0 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
+                    {agent.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-3 mb-1">
+                      <span className="text-primary font-headline font-black text-xs tracking-widest">{agent.num}</span>
+                      <h4 className="font-headline font-bold text-lg tracking-tight text-on-surface">{agent.title}</h4>
+                    </div>
+                    <p className="text-tertiary/70 text-xs font-label uppercase tracking-widest mb-3">{agent.subtitle}</p>
+                    <p className="text-on-surface-variant text-sm leading-relaxed">{agent.desc}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative sticky top-32">
+            <div className="absolute -top-10 -right-10 w-64 h-64 bg-primary/10 blur-3xl rounded-full -z-0" />
+            <img src={agentsNetwork} alt="AI Agents network architecture diagram" className="rounded-md border border-on-surface/10 glow-blue max-w-full relative z-10" />
+            <p className="text-center text-xs text-on-surface-variant/50 mt-4 font-label uppercase tracking-widest">
+              Replace <code className="text-primary/60">src/assets/ai-agents-network.jpg</code> to change image
+            </p>
+          </div>
         </div>
       </div>
     </Section>
