@@ -45,7 +45,8 @@ const Demo = () => {
   const [bestPath, setBestPath] = useState<{ path: string[]; edgeIds: string[]; totalWeight: number } | null>(null);
   const [audioText, setAudioText] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const audioRecognitionRef = useRef<any>(null);
   const [audioTranscript, setAudioTranscript] = useState("");
   const [correctedText, setCorrectedText] = useState("");
   const [loadingAudio, setLoadingAudio] = useState(false);
@@ -189,106 +190,82 @@ const Demo = () => {
     setLoadingTraffic(false);
   };
 
-  // 2-step audio processing: speech-to-text → LLM correction → traffic analysis
-  const handleAudioUpload = async () => {
-    if (!audioFile) return;
-    setLoadingAudio(true);
+  // Start/stop microphone recording for audio analysis
+  const toggleAudioRecording = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      addLog("❌ Speech recognition not supported in this browser");
+      return;
+    }
+
+    if (isRecordingAudio) {
+      audioRecognitionRef.current?.stop();
+      setIsRecordingAudio(false);
+      addLog("🛑 Recording stopped");
+      return;
+    }
+
     setAudioTranscript("");
     setCorrectedText("");
 
-    addLog("🎵 Step 1: Converting audio to text (Web Speech API)...");
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = "vi-VN";
+
+    let transcript = "";
+
+    recognition.onresult = (event: any) => {
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          transcript += event.results[i][0].transcript + " ";
+        }
+      }
+      setAudioTranscript(transcript.trim());
+    };
+
+    recognition.onerror = (e: any) => {
+      addLog(`❌ Recording error: ${e.error}`);
+      setIsRecordingAudio(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecordingAudio(false);
+    };
+
+    audioRecognitionRef.current = recognition;
+    recognition.start();
+    setIsRecordingAudio(true);
+    addLog("🎙️ Recording started — speak now...");
+  };
+
+  // Process recorded transcript through LLM correction → traffic analysis
+  const handleProcessTranscript = async () => {
+    if (!audioTranscript.trim()) return;
+    setLoadingAudio(true);
 
     try {
-      // Step 1: Use Web Audio API + Speech Recognition
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        addLog("❌ Speech recognition not supported. Falling back to filename-based analysis.");
-        setLoadingAudio(false);
-        return;
-      }
+      addLog(`📝 Step 1 complete — Raw transcript: "${audioTranscript}"`);
 
-      // Play audio through an audio element and capture via speech recognition
-      const audioUrl = URL.createObjectURL(audioFile);
-      const audio = new Audio(audioUrl);
-
-      // For speech recognition from audio files, we use a workaround:
-      // Create a MediaStream from the audio element
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaElementSource(audio);
-      const dest = audioContext.createMediaStreamDestination();
-      source.connect(dest);
-      source.connect(audioContext.destination);
-
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.lang = "vi-VN";
-
-      let transcript = "";
-
-      recognition.onresult = (event: any) => {
-        for (let i = 0; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            transcript += event.results[i][0].transcript + " ";
-          }
-        }
-      };
-
-      await new Promise<void>((resolve, reject) => {
-        recognition.onend = () => resolve();
-        recognition.onerror = (e: any) => {
-          if (e.error === "no-speech") resolve();
-          else reject(new Error(e.error));
-        };
-
-        recognition.start();
-        audio.play();
-
-        audio.onended = () => {
-          setTimeout(() => {
-            recognition.stop();
-          }, 1500);
-        };
-
-        setTimeout(() => {
-          recognition.stop();
-          audio.pause();
-        }, 60000);
-      });
-
-      await audioContext.close();
-      URL.revokeObjectURL(audioUrl);
-
-      if (!transcript.trim()) {
-        addLog("⚠ No speech detected in audio. Try typing a report instead.");
-        setLoadingAudio(false);
-        return;
-      }
-
-      setAudioTranscript(transcript.trim());
-      addLog(`📝 Raw transcript: "${transcript.trim()}"`);
-
-      // Step 2: LLM correction
       addLog("🤖 Step 2: AI correcting transcript...");
       await delay(500);
 
       const roadNames = graph.edges.map((e) => e.name);
       const { data: correctionData, error: correctionError } = await supabase.functions.invoke("analyze-image", {
-        body: { type: "correct_speech_text", textReport: transcript.trim(), roadNames },
+        body: { type: "correct_speech_text", textReport: audioTranscript, roadNames },
       });
 
       if (correctionError) throw correctionError;
 
-      const corrected = correctionData?.result?.correctedText || transcript.trim();
+      const corrected = correctionData?.result?.correctedText || audioTranscript;
       setCorrectedText(corrected);
       addLog(`✅ Corrected text: "${corrected}"`);
 
-      // Step 3: Analyze the corrected text as a traffic report
       addLog("📊 Step 3: Analyzing corrected text for traffic conditions...");
       await handleTrafficReport(corrected);
 
     } catch (err: any) {
-      addLog(`❌ Audio processing failed: ${err.message || "Unknown error"}`);
+      addLog(`❌ Processing failed: ${err.message || "Unknown error"}`);
     }
 
     setLoadingAudio(false);
@@ -538,37 +515,38 @@ const Demo = () => {
               </button>
             </div>
 
-            {/* Audio Upload Analysis */}
+            {/* Audio Recording Analysis */}
             <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
-              {loadingAudio && <LoadingOverlay label="Processing audio..." />}
+              {loadingAudio && <LoadingOverlay label="Processing transcript..." />}
               <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-secondary">Audio Analysis</h3>
-              <p className="text-[10px] text-on-surface-variant mb-3">Upload audio file → Speech-to-Text → AI Correction → Traffic Analysis</p>
-              <input
-                type="file"
-                accept="audio/*"
-                onChange={(e) => {
-                  setAudioFile(e.target.files?.[0] || null);
-                  setAudioTranscript("");
-                  setCorrectedText("");
-                }}
-                className="w-full text-xs text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-secondary/20 file:text-secondary"
-              />
-              {audioFile && (
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center gap-2 p-2 bg-secondary/10 rounded text-xs">
-                    <Upload className="w-3 h-3 text-secondary" />
-                    <span className="text-on-surface truncate">{audioFile.name}</span>
-                    <button onClick={() => { setAudioFile(null); setAudioTranscript(""); setCorrectedText(""); }} className="ml-auto text-on-surface-variant hover:text-error text-xs">✕</button>
-                  </div>
-                  <button onClick={handleAudioUpload} disabled={loadingAudio} className="w-full bg-secondary/20 text-secondary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
-                    {loadingAudio ? "Processing..." : "Process Audio"}
-                  </button>
-                </div>
-              )}
+              <p className="text-[10px] text-on-surface-variant mb-3">Record via microphone → Speech-to-Text → AI Correction → Traffic Analysis</p>
+              
+              <button
+                onClick={toggleAudioRecording}
+                className={`w-full py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                  isRecordingAudio
+                    ? "bg-error/20 text-error animate-pulse"
+                    : "bg-secondary/20 text-secondary"
+                }`}
+              >
+                {isRecordingAudio ? <><MicOff className="w-4 h-4" /> Stop Recording</> : <><Mic className="w-4 h-4" /> Start Recording</>}
+              </button>
+
               {audioTranscript && (
-                <div className="mt-3 p-2 bg-on-surface/5 rounded text-xs space-y-1">
-                  <div className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">Raw Transcript:</div>
-                  <div className="text-on-surface">{audioTranscript}</div>
+                <div className="mt-3 space-y-2">
+                  <div className="p-2 bg-on-surface/5 rounded text-xs space-y-1">
+                    <div className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">Raw Transcript:</div>
+                    <div className="text-on-surface">{audioTranscript}</div>
+                  </div>
+                  {!correctedText && (
+                    <button
+                      onClick={handleProcessTranscript}
+                      disabled={loadingAudio || isRecordingAudio}
+                      className="w-full bg-secondary/20 text-secondary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      {loadingAudio ? "Processing..." : "Process with AI"}
+                    </button>
+                  )}
                 </div>
               )}
               {correctedText && (
