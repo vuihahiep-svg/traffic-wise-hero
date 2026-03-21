@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { createHCMGraph, findShortestPath, type CityGraph } from "@/lib/graph";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mic, MicOff } from "lucide-react";
+import { Loader2, Mic, MicOff, Upload } from "lucide-react";
 
 const MAP_CENTER: [number, number] = [10.79, 106.69];
 
