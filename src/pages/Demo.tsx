@@ -190,106 +190,82 @@ const Demo = () => {
     setLoadingTraffic(false);
   };
 
-  // 2-step audio processing: speech-to-text → LLM correction → traffic analysis
-  const handleAudioUpload = async () => {
-    if (!audioFile) return;
-    setLoadingAudio(true);
+  // Start/stop microphone recording for audio analysis
+  const toggleAudioRecording = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      addLog("❌ Speech recognition not supported in this browser");
+      return;
+    }
+
+    if (isRecordingAudio) {
+      audioRecognitionRef.current?.stop();
+      setIsRecordingAudio(false);
+      addLog("🛑 Recording stopped");
+      return;
+    }
+
     setAudioTranscript("");
     setCorrectedText("");
 
-    addLog("🎵 Step 1: Converting audio to text (Web Speech API)...");
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = "vi-VN";
+
+    let transcript = "";
+
+    recognition.onresult = (event: any) => {
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          transcript += event.results[i][0].transcript + " ";
+        }
+      }
+      setAudioTranscript(transcript.trim());
+    };
+
+    recognition.onerror = (e: any) => {
+      addLog(`❌ Recording error: ${e.error}`);
+      setIsRecordingAudio(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecordingAudio(false);
+    };
+
+    audioRecognitionRef.current = recognition;
+    recognition.start();
+    setIsRecordingAudio(true);
+    addLog("🎙️ Recording started — speak now...");
+  };
+
+  // Process recorded transcript through LLM correction → traffic analysis
+  const handleProcessTranscript = async () => {
+    if (!audioTranscript.trim()) return;
+    setLoadingAudio(true);
 
     try {
-      // Step 1: Use Web Audio API + Speech Recognition
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        addLog("❌ Speech recognition not supported. Falling back to filename-based analysis.");
-        setLoadingAudio(false);
-        return;
-      }
+      addLog(`📝 Step 1 complete — Raw transcript: "${audioTranscript}"`);
 
-      // Play audio through an audio element and capture via speech recognition
-      const audioUrl = URL.createObjectURL(audioFile);
-      const audio = new Audio(audioUrl);
-
-      // For speech recognition from audio files, we use a workaround:
-      // Create a MediaStream from the audio element
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaElementSource(audio);
-      const dest = audioContext.createMediaStreamDestination();
-      source.connect(dest);
-      source.connect(audioContext.destination);
-
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.lang = "vi-VN";
-
-      let transcript = "";
-
-      recognition.onresult = (event: any) => {
-        for (let i = 0; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            transcript += event.results[i][0].transcript + " ";
-          }
-        }
-      };
-
-      await new Promise<void>((resolve, reject) => {
-        recognition.onend = () => resolve();
-        recognition.onerror = (e: any) => {
-          if (e.error === "no-speech") resolve();
-          else reject(new Error(e.error));
-        };
-
-        recognition.start();
-        audio.play();
-
-        audio.onended = () => {
-          setTimeout(() => {
-            recognition.stop();
-          }, 1500);
-        };
-
-        setTimeout(() => {
-          recognition.stop();
-          audio.pause();
-        }, 60000);
-      });
-
-      await audioContext.close();
-      URL.revokeObjectURL(audioUrl);
-
-      if (!transcript.trim()) {
-        addLog("⚠ No speech detected in audio. Try typing a report instead.");
-        setLoadingAudio(false);
-        return;
-      }
-
-      setAudioTranscript(transcript.trim());
-      addLog(`📝 Raw transcript: "${transcript.trim()}"`);
-
-      // Step 2: LLM correction
       addLog("🤖 Step 2: AI correcting transcript...");
       await delay(500);
 
       const roadNames = graph.edges.map((e) => e.name);
       const { data: correctionData, error: correctionError } = await supabase.functions.invoke("analyze-image", {
-        body: { type: "correct_speech_text", textReport: transcript.trim(), roadNames },
+        body: { type: "correct_speech_text", textReport: audioTranscript, roadNames },
       });
 
       if (correctionError) throw correctionError;
 
-      const corrected = correctionData?.result?.correctedText || transcript.trim();
+      const corrected = correctionData?.result?.correctedText || audioTranscript;
       setCorrectedText(corrected);
       addLog(`✅ Corrected text: "${corrected}"`);
 
-      // Step 3: Analyze the corrected text as a traffic report
       addLog("📊 Step 3: Analyzing corrected text for traffic conditions...");
       await handleTrafficReport(corrected);
 
     } catch (err: any) {
-      addLog(`❌ Audio processing failed: ${err.message || "Unknown error"}`);
+      addLog(`❌ Processing failed: ${err.message || "Unknown error"}`);
     }
 
     setLoadingAudio(false);
