@@ -190,6 +190,9 @@ const Demo = () => {
     if (isFlood) setLoadingFlood(true);
     else setLoadingTraffic(true);
 
+    // Save graph snapshot before analysis for revert option
+    setPreAnalysisGraph(JSON.parse(JSON.stringify(graph)));
+
     addLog(`📸 AI analyzing image for ${isFlood ? "flooding" : "traffic"}...`);
 
     try {
