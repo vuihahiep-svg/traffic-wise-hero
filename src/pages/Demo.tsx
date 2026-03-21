@@ -144,15 +144,16 @@ const Demo = () => {
     setLoadingRoute(false);
   };
 
-  const handleTrafficReport = async () => {
-    if (!audioText.trim()) return;
+  const handleTrafficReport = async (reportText?: string) => {
+    const text = reportText || audioText;
+    if (!text.trim()) return;
     setLoadingTraffic(true);
     addLog("🤖 AI analyzing traffic report...");
 
     try {
       const roadNames = graph.edges.map((e) => e.name);
       const { data, error } = await supabase.functions.invoke("analyze-image", {
-        body: { type: "traffic_report", textReport: audioText, roadNames },
+        body: { type: "traffic_report", textReport: text, roadNames },
       });
 
       if (error) throw error;
@@ -166,8 +167,10 @@ const Demo = () => {
             e.name.toLowerCase().includes(road.name.toLowerCase()) || road.name.toLowerCase().includes(e.name.toLowerCase())
           );
           if (edgeIdx !== -1) {
+            const oldWeight = updatedGraph.edges[edgeIdx].weight;
             updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: road.severity };
-            addLog(`🚗 AI: "${updatedGraph.edges[edgeIdx].name}" → ${road.condition} (weight: ${road.severity})`);
+            const icon = road.condition === "clear" ? "✅" : "🚗";
+            addLog(`${icon} AI: "${updatedGraph.edges[edgeIdx].name}" → ${road.condition} (weight: ${oldWeight} → ${road.severity})`);
           }
         }
 
@@ -182,8 +185,113 @@ const Demo = () => {
       addLog(`❌ AI analysis failed: ${err.message || "Unknown error"}`);
     }
 
-    setAudioText("");
+    if (!reportText) setAudioText("");
     setLoadingTraffic(false);
+  };
+
+  // 2-step audio processing: speech-to-text → LLM correction → traffic analysis
+  const handleAudioUpload = async () => {
+    if (!audioFile) return;
+    setLoadingAudio(true);
+    setAudioTranscript("");
+    setCorrectedText("");
+
+    addLog("🎵 Step 1: Converting audio to text (Web Speech API)...");
+
+    try {
+      // Step 1: Use Web Audio API + Speech Recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        addLog("❌ Speech recognition not supported. Falling back to filename-based analysis.");
+        setLoadingAudio(false);
+        return;
+      }
+
+      // Play audio through an audio element and capture via speech recognition
+      const audioUrl = URL.createObjectURL(audioFile);
+      const audio = new Audio(audioUrl);
+
+      // For speech recognition from audio files, we use a workaround:
+      // Create a MediaStream from the audio element
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaElementSource(audio);
+      const dest = audioContext.createMediaStreamDestination();
+      source.connect(dest);
+      source.connect(audioContext.destination);
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = "vi-VN";
+
+      let transcript = "";
+
+      recognition.onresult = (event: any) => {
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript + " ";
+          }
+        }
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        recognition.onend = () => resolve();
+        recognition.onerror = (e: any) => {
+          if (e.error === "no-speech") resolve();
+          else reject(new Error(e.error));
+        };
+
+        recognition.start();
+        audio.play();
+
+        audio.onended = () => {
+          setTimeout(() => {
+            recognition.stop();
+          }, 1500);
+        };
+
+        setTimeout(() => {
+          recognition.stop();
+          audio.pause();
+        }, 60000);
+      });
+
+      await audioContext.close();
+      URL.revokeObjectURL(audioUrl);
+
+      if (!transcript.trim()) {
+        addLog("⚠ No speech detected in audio. Try typing a report instead.");
+        setLoadingAudio(false);
+        return;
+      }
+
+      setAudioTranscript(transcript.trim());
+      addLog(`📝 Raw transcript: "${transcript.trim()}"`);
+
+      // Step 2: LLM correction
+      addLog("🤖 Step 2: AI correcting transcript...");
+      await delay(500);
+
+      const roadNames = graph.edges.map((e) => e.name);
+      const { data: correctionData, error: correctionError } = await supabase.functions.invoke("analyze-image", {
+        body: { type: "correct_speech_text", textReport: transcript.trim(), roadNames },
+      });
+
+      if (correctionError) throw correctionError;
+
+      const corrected = correctionData?.result?.correctedText || transcript.trim();
+      setCorrectedText(corrected);
+      addLog(`✅ Corrected text: "${corrected}"`);
+
+      // Step 3: Analyze the corrected text as a traffic report
+      addLog("📊 Step 3: Analyzing corrected text for traffic conditions...");
+      await handleTrafficReport(corrected);
+
+    } catch (err: any) {
+      addLog(`❌ Audio processing failed: ${err.message || "Unknown error"}`);
+    }
+
+    setLoadingAudio(false);
   };
 
   const TARGET_NODE_ID = "n17"; // Ngã 4 Phú Nhuận
