@@ -1,5 +1,5 @@
 import heroCity from "@/assets/hero-city.jpg";
-import agentsNetwork from "@/assets/ai-agents-network.jpg";
+import agentsNetwork from "@/assets/ai-agents-network.png";
 import floodScene from "@/assets/flood-scene.jpg";
 import dashboardImg from "@/assets/dashboard-interface.jpg";
 import { Link } from "react-router-dom";
@@ -150,7 +150,7 @@ const Index = () => (
         <div className="text-center mb-20">
           <span className="text-tertiary font-label text-sm font-bold uppercase tracking-widest block mb-4">Multi-Agent Architecture</span>
           <h2 className="font-headline text-4xl md:text-5xl font-black tracking-tighter uppercase mb-6">
-            Four Specialized Agents,<br /><span className="text-gradient">One Unified Intelligence.</span>
+            System Architecture,<br /><span className="text-gradient">One Unified Intelligence.</span>
           </h2>
           <p className="text-on-surface-variant max-w-2xl mx-auto font-body">
             Each agent is a domain expert. Together, they form a collaborative intelligence network that sees what no single system can.
@@ -201,10 +201,7 @@ const Index = () => (
 
           <div className="relative sticky top-32">
             <div className="absolute -top-10 -right-10 w-64 h-64 bg-primary/10 blur-3xl rounded-full -z-0" />
-            <img src={agentsNetwork} alt="AI Agents network architecture diagram" className="rounded-md border border-on-surface/10 glow-blue max-w-full relative z-10" />
-            <p className="text-center text-xs text-on-surface-variant/50 mt-4 font-label uppercase tracking-widest">
-              Replace <code className="text-primary/60">src/assets/ai-agents-network.jpg</code> to change image
-            </p>
+            <img src={agentsNetwork} alt="Multi-Agent City Brain System Architecture" className="rounded-md border border-on-surface/10 glow-blue max-w-full relative z-10" />
           </div>
         </div>
       </div>
