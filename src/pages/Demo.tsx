@@ -59,6 +59,7 @@ const Demo = () => {
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [loadingTraffic, setLoadingTraffic] = useState(false);
   const [loadingFlood, setLoadingFlood] = useState(false);
+  const [loadingSync, setLoadingSync] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [analysisMode, setAnalysisMode] = useState<"flood" | "traffic">("flood");
 
