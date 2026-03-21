@@ -47,6 +47,8 @@ const Demo = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const audioRecognitionRef = useRef<any>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioMode, setAudioMode] = useState<"mic" | "file">("mic");
   const [audioTranscript, setAudioTranscript] = useState("");
   const [correctedText, setCorrectedText] = useState("");
   const [loadingAudio, setLoadingAudio] = useState(false);
