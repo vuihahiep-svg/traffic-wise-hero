@@ -104,20 +104,30 @@ const Demo = () => {
       const toNode = graph.nodes.find((n) => n.id === edge.to);
       if (!fromNode || !toNode) return;
       const isOnBestPath = bestPath?.edgeIds.includes(edge.id) ?? false;
+      const isTrafficJam = edge.weight >= 70;
       L.polyline([[fromNode.lat, fromNode.lng], [toNode.lat, toNode.lng]], {
         color: isOnBestPath ? "#2792ff" : getEdgeColor(edge.weight),
-        weight: isOnBestPath ? 6 : 3,
+        weight: isOnBestPath ? 6 : isTrafficJam ? 5 : 3,
         opacity: isOnBestPath ? 1 : 0.6,
-      }).bindPopup(`<strong>${edge.name}</strong><br/>Weight: ${edge.weight}/100`).addTo(layerGroup);
+        dashArray: isTrafficJam && !isOnBestPath ? "8 6" : undefined,
+      }).bindPopup(`<strong>${edge.name}</strong><br/>Weight: ${edge.weight}/100${isTrafficJam ? '<br/><span style="color:#ff4444;font-weight:700;">⚠️ TRAFFIC JAM</span>' : ''}`).addTo(layerGroup);
+      // Traffic zone circle at midpoint for heavily congested roads
+      if (edge.weight >= 80) {
+        const midLat = (fromNode.lat + toNode.lat) / 2;
+        const midLng = (fromNode.lng + toNode.lng) / 2;
+        L.circle([midLat, midLng], { radius: 250, color: "#ff8800", fillColor: "#ff8800", fillOpacity: 0.12, weight: 1, dashArray: "4 4" }).addTo(layerGroup);
+      }
     });
 
     graph.nodes.forEach((node) => {
-      const markerColor = node.id === startNode ? "#2792ff" : node.id === endNode ? "#3ce36a" : node.flooded ? "#ff4444" : "#a5c8ff";
+      const markerColor = node.id === startNode ? "#2792ff" : node.id === endNode ? "#3ce36a" : node.flooded ? "#ff4444" : node.floodScore >= 70 ? "#ff8800" : "#a5c8ff";
       L.circleMarker([node.lat, node.lng], {
         radius: 7, color: "#041329", weight: 2, fillColor: markerColor, fillOpacity: 1,
-      }).bindPopup(`<div style="font-size:12px;line-height:1.5;"><strong>${node.name}</strong><br/>${node.flooded ? `<span style="color:#ff4444;font-weight:700;">🌊 FLOODED (Score: ${node.floodScore})</span>` : "Normal"}</div>`).addTo(layerGroup);
+      }).bindPopup(`<div style="font-size:12px;line-height:1.5;"><strong>${node.name}</strong><br/>${node.flooded ? `<span style="color:#ff4444;font-weight:700;">🌊 FLOODED (Score: ${node.floodScore})</span>` : node.floodScore >= 70 ? `<span style="color:#ff8800;font-weight:700;">⚠️ CONGESTED (Score: ${node.floodScore})</span>` : "Normal"}</div>`).addTo(layerGroup);
       if (node.flooded) {
         L.circle([node.lat, node.lng], { radius: 400, color: "#ff4444", fillColor: "#ff4444", fillOpacity: 0.18, weight: 2 }).addTo(layerGroup);
+      } else if (node.floodScore >= 70) {
+        L.circle([node.lat, node.lng], { radius: 300, color: "#ff8800", fillColor: "#ff8800", fillOpacity: 0.12, weight: 1, dashArray: "6 4" }).addTo(layerGroup);
       }
     });
   }, [graph, startNode, endNode, bestPath]);
@@ -148,73 +158,114 @@ const Demo = () => {
     setLoadingRoute(false);
   };
 
-  const syncMediaSeed = async () => {
+  const syncMediaSeed = useCallback(async (silent = false) => {
     setLoadingSync(true);
-    addLog("📡 Fetching latest route scores from API...");
+    if (!silent) addLog("📡 Fetching latest route scores from API...");
     await delay(1000);
 
     try {
       const { data, error } = await supabase.functions.invoke("media-seed-latest");
       if (error) throw error;
 
-      const routes: { route: string; score: number; reason: string }[] = data?.routes || [];
+      const routes: { route: string; score: number; reason: string; node?: boolean }[] = data?.routes || [];
       if (routes.length === 0) {
-        addLog("⚠ No route scores returned from API");
+        if (!silent) addLog("⚠ No route scores returned from API");
         setLoadingSync(false);
         return;
       }
 
-      const updatedGraph = { ...graph, edges: [...graph.edges], nodes: [...graph.nodes] };
-      let matched = 0;
+      setGraph((prevGraph) => {
+        const updatedGraph = {
+          ...prevGraph,
+          edges: prevGraph.edges.map((e) => ({ ...e })),
+          nodes: prevGraph.nodes.map((n) => ({ ...n })),
+        };
+        let matched = 0;
 
-      for (const entry of routes) {
-        // Try to match route name to edges
-        const edgeIdx = updatedGraph.edges.findIndex((e) =>
-          e.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-          entry.route.toLowerCase().includes(e.name.toLowerCase())
-        );
-        if (edgeIdx !== -1) {
-          const oldWeight = updatedGraph.edges[edgeIdx].weight;
-          updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: entry.score };
-          addLog(`📊 API: "${updatedGraph.edges[edgeIdx].name}" → score ${oldWeight} → ${entry.score} (${entry.reason})`);
-          matched++;
+        for (const entry of routes) {
+          if (entry.node) {
+            // node: true → this is a crossroad/intersection, update the node AND all surrounding roads
+            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
+              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+              entry.route.toLowerCase().includes(n.name.toLowerCase())
+            );
+            if (nodeIdx !== -1) {
+              const matchedNode = updatedGraph.nodes[nodeIdx];
+              const isFlooded = entry.score >= 50;
+              updatedGraph.nodes[nodeIdx] = {
+                ...matchedNode,
+                flooded: isFlooded,
+                floodScore: entry.score,
+              };
+              addLog(`${isFlooded ? '🌊' : '📍'} API node: "${matchedNode.name}" → score ${entry.score} (${entry.reason})`);
+              matched++;
+
+              // Update ALL surrounding edges connected to this node
+              updatedGraph.edges.forEach((edge, eIdx) => {
+                if (edge.from === matchedNode.id || edge.to === matchedNode.id) {
+                  const oldW = edge.weight;
+                  const newW = Math.max(edge.weight, Math.round(entry.score * 0.8));
+                  updatedGraph.edges[eIdx] = { ...edge, weight: newW };
+                  if (newW !== oldW) {
+                    addLog(`  ↳ Road "${edge.name}" weight ${oldW} → ${newW} (near ${matchedNode.name})`);
+                  }
+                }
+              });
+            }
+          } else {
+            // node: false or missing → this is a road/edge
+            const edgeIdx = updatedGraph.edges.findIndex((e) =>
+              e.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+              entry.route.toLowerCase().includes(e.name.toLowerCase())
+            );
+            if (edgeIdx !== -1) {
+              const oldWeight = updatedGraph.edges[edgeIdx].weight;
+              updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: entry.score };
+              addLog(`📊 API: "${updatedGraph.edges[edgeIdx].name}" → score ${oldWeight} → ${entry.score} (${entry.reason})`);
+              matched++;
+            }
+
+            // Also check nodes for non-node entries
+            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
+              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+              entry.route.toLowerCase().includes(n.name.toLowerCase())
+            );
+            if (nodeIdx !== -1) {
+              updatedGraph.nodes[nodeIdx] = {
+                ...updatedGraph.nodes[nodeIdx],
+                flooded: entry.score >= 50,
+                floodScore: entry.score,
+              };
+              matched++;
+            }
+          }
         }
 
-        // Also try matching to nodes (for flood/intersection scores)
-        const nodeIdx = updatedGraph.nodes.findIndex((n) =>
-          n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-          entry.route.toLowerCase().includes(n.name.toLowerCase())
-        );
-        if (nodeIdx !== -1 && entry.score >= 50) {
-          updatedGraph.nodes[nodeIdx] = {
-            ...updatedGraph.nodes[nodeIdx],
-            flooded: true,
-            floodScore: entry.score,
-          };
-          addLog(`🌊 API: "${updatedGraph.nodes[nodeIdx].name}" marked flooded (score: ${entry.score})`);
-          matched++;
-        } else if (nodeIdx !== -1 && entry.score < 50) {
-          updatedGraph.nodes[nodeIdx] = {
-            ...updatedGraph.nodes[nodeIdx],
-            flooded: false,
-            floodScore: entry.score,
-          };
-          matched++;
-        }
-      }
+        addLog(`✅ Synced ${routes.length} scores (${matched} matched)`);
+        return updatedGraph;
+      });
 
-      addLog(`✅ Synced ${routes.length} scores from API (${matched} matched to graph)`);
-      setGraph(updatedGraph);
-      recalculateRoute(updatedGraph);
-      if (startNode && endNode) {
-        addLog("🔄 Route recalculated with API scores");
-      }
+      // Recalculate after state update
+      setTimeout(() => {
+        setGraph((g) => {
+          recalculateRoute(g);
+          return g;
+        });
+      }, 100);
     } catch (err: any) {
-      addLog(`❌ API sync failed: ${err.message || "Unknown error"}`);
+      if (!silent) addLog(`❌ API sync failed: ${err.message || "Unknown error"}`);
     }
 
     setLoadingSync(false);
-  };
+  }, [addLog, recalculateRoute]);
+
+  // Auto-sync every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      syncMediaSeed(true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [syncMediaSeed]);
 
   const handleTrafficReport = async (reportText?: string) => {
     const text = reportText || audioText;
@@ -616,7 +667,7 @@ const Demo = () => {
                 <button onClick={findRoute} disabled={loadingRoute || !startNode || !endNode} className="w-full bg-primary-container text-primary-container-foreground py-2.5 rounded font-headline font-bold uppercase tracking-widest text-sm active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
                   {loadingRoute ? "Calculating..." : "Find Best Route"}
                 </button>
-                <button onClick={syncMediaSeed} disabled={loadingSync} className="w-full bg-tertiary/15 text-tertiary py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none relative overflow-hidden">
+                <button onClick={() => syncMediaSeed(false)} disabled={loadingSync} className="w-full bg-tertiary/15 text-tertiary py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none relative overflow-hidden">
                   {loadingSync ? "Syncing API..." : "📡 Sync Scores from API"}
                 </button>
                 <button onClick={resetGraph} className="w-full border border-outline-variant/20 text-on-surface-variant py-2 rounded text-xs uppercase tracking-widest active:scale-95 transition-transform">Reset All</button>
