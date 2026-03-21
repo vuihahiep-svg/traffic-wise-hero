@@ -3,6 +3,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { createHCMGraph, findShortestPath, type CityGraph } from "@/lib/graph";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Mic, MicOff } from "lucide-react";
 
 const MAP_CENTER: [number, number] = [10.79, 106.69];
 
@@ -13,6 +15,29 @@ const getEdgeColor = (weight: number) => {
   return "#ff4444";
 };
 
+const LoadingOverlay = ({ label }: { label: string }) => (
+  <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/70 backdrop-blur-sm rounded-md">
+    <div className="flex flex-col items-center gap-3">
+      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <span className="text-xs uppercase tracking-widest text-on-surface-variant font-headline">{label}</span>
+      <div className="w-32 h-1 bg-on-surface/10 rounded-full overflow-hidden">
+        <div className="h-full bg-primary rounded-full animate-[loading_1.5s_ease-in-out_infinite]" />
+      </div>
+    </div>
+  </div>
+);
+
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
 const Demo = () => {
   const [graph, setGraph] = useState<CityGraph>(createHCMGraph);
   const [startNode, setStartNode] = useState("");
@@ -22,10 +47,17 @@ const Demo = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [log, setLog] = useState<string[]>([]);
 
+  const [loadingRoute, setLoadingRoute] = useState(false);
+  const [loadingTraffic, setLoadingTraffic] = useState(false);
+  const [loadingFlood, setLoadingFlood] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<"flood" | "traffic">("flood");
+
   const logRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const addLog = useCallback((msg: string) => {
     setLog((prev) => [...prev.slice(-50), `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -35,92 +67,47 @@ const Demo = () => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [log]);
 
+  // Map initialization
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
-
-    const map = L.map(mapContainerRef.current, {
-      zoomControl: true,
-      attributionControl: true,
-    }).setView(MAP_CENTER, 13);
-
+    const map = L.map(mapContainerRef.current, { zoomControl: true, attributionControl: true }).setView(MAP_CENTER, 13);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
       subdomains: "abcd",
       maxZoom: 20,
     }).addTo(map);
-
     const layerGroup = L.layerGroup().addTo(map);
     mapRef.current = map;
     layerGroupRef.current = layerGroup;
-
-    return () => {
-      layerGroup.clearLayers();
-      map.remove();
-      mapRef.current = null;
-      layerGroupRef.current = null;
-    };
+    return () => { layerGroup.clearLayers(); map.remove(); mapRef.current = null; layerGroupRef.current = null; };
   }, []);
 
+  // Map rendering
   useEffect(() => {
     const map = mapRef.current;
     const layerGroup = layerGroupRef.current;
     if (!map || !layerGroup) return;
-
     layerGroup.clearLayers();
 
     graph.edges.forEach((edge) => {
       const fromNode = graph.nodes.find((n) => n.id === edge.from);
       const toNode = graph.nodes.find((n) => n.id === edge.to);
       if (!fromNode || !toNode) return;
-
       const isOnBestPath = bestPath?.edgeIds.includes(edge.id) ?? false;
-      const polyline = L.polyline(
-        [
-          [fromNode.lat, fromNode.lng],
-          [toNode.lat, toNode.lng],
-        ],
-        {
-          color: isOnBestPath ? "#2792ff" : getEdgeColor(edge.weight),
-          weight: isOnBestPath ? 6 : 3,
-          opacity: isOnBestPath ? 1 : 0.6,
-        }
-      ).bindPopup(`<strong>${edge.name}</strong><br/>Weight: ${edge.weight}/100`);
-
-      polyline.addTo(layerGroup);
+      L.polyline([[fromNode.lat, fromNode.lng], [toNode.lat, toNode.lng]], {
+        color: isOnBestPath ? "#2792ff" : getEdgeColor(edge.weight),
+        weight: isOnBestPath ? 6 : 3,
+        opacity: isOnBestPath ? 1 : 0.6,
+      }).bindPopup(`<strong>${edge.name}</strong><br/>Weight: ${edge.weight}/100`).addTo(layerGroup);
     });
 
     graph.nodes.forEach((node) => {
-      const markerColor = node.id === startNode
-        ? "#2792ff"
-        : node.id === endNode
-          ? "#3ce36a"
-          : node.flooded
-            ? "#ff4444"
-            : "#a5c8ff";
-
-      const marker = L.circleMarker([node.lat, node.lng], {
-        radius: 7,
-        color: "#041329",
-        weight: 2,
-        fillColor: markerColor,
-        fillOpacity: 1,
-      }).bindPopup(`
-        <div style="font-size:12px;line-height:1.5;">
-          <strong>${node.name}</strong><br/>
-          ${node.flooded ? `<span style="color:#ff4444;font-weight:700;">🌊 FLOODED (Score: ${node.floodScore})</span>` : "Normal"}
-        </div>
-      `);
-
-      marker.addTo(layerGroup);
-
+      const markerColor = node.id === startNode ? "#2792ff" : node.id === endNode ? "#3ce36a" : node.flooded ? "#ff4444" : "#a5c8ff";
+      L.circleMarker([node.lat, node.lng], {
+        radius: 7, color: "#041329", weight: 2, fillColor: markerColor, fillOpacity: 1,
+      }).bindPopup(`<div style="font-size:12px;line-height:1.5;"><strong>${node.name}</strong><br/>${node.flooded ? `<span style="color:#ff4444;font-weight:700;">🌊 FLOODED (Score: ${node.floodScore})</span>` : "Normal"}</div>`).addTo(layerGroup);
       if (node.flooded) {
-        L.circle([node.lat, node.lng], {
-          radius: 400,
-          color: "#ff4444",
-          fillColor: "#ff4444",
-          fillOpacity: 0.18,
-          weight: 2,
-        }).addTo(layerGroup);
+        L.circle([node.lat, node.lng], { radius: 400, color: "#ff4444", fillColor: "#ff4444", fillOpacity: 0.18, weight: 2 }).addTo(layerGroup);
       }
     });
   }, [graph, startNode, endNode, bestPath]);
@@ -131,86 +118,188 @@ const Demo = () => {
     setBestPath(result.totalWeight === Infinity ? null : result);
   }, [startNode, endNode]);
 
-  const findRoute = () => {
-    if (!startNode || !endNode) return;
-    if (startNode === endNode) {
-      addLog("⚠ Start and end must be different");
-      return;
-    }
+  const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+  const findRoute = async () => {
+    if (!startNode || !endNode) return;
+    if (startNode === endNode) { addLog("⚠ Start and end must be different"); return; }
+    setLoadingRoute(true);
+    addLog("🔍 Calculating best route...");
+    await delay(1000);
     const result = findShortestPath(graph, startNode, endNode);
     if (result.totalWeight === Infinity) {
       addLog("❌ No path found");
       setBestPath(null);
+    } else {
+      setBestPath(result);
+      const nodeNames = result.path.map((id) => graph.nodes.find((n) => n.id === id)?.name).join(" → ");
+      addLog(`✅ Route found: ${nodeNames} (Total weight: ${result.totalWeight})`);
+    }
+    setLoadingRoute(false);
+  };
+
+  const handleTrafficReport = async () => {
+    if (!audioText.trim()) return;
+    setLoadingTraffic(true);
+    addLog("🤖 AI analyzing traffic report...");
+
+    try {
+      const roadNames = graph.edges.map((e) => e.name);
+      const { data, error } = await supabase.functions.invoke("analyze-image", {
+        body: { type: "traffic_report", textReport: audioText, roadNames },
+      });
+
+      if (error) throw error;
+      await delay(1000);
+
+      if (data?.result?.roads && data.result.roads.length > 0) {
+        const updatedGraph = { ...graph, edges: [...graph.edges], nodes: [...graph.nodes] };
+
+        for (const road of data.result.roads) {
+          const edgeIdx = updatedGraph.edges.findIndex((e) =>
+            e.name.toLowerCase().includes(road.name.toLowerCase()) || road.name.toLowerCase().includes(e.name.toLowerCase())
+          );
+          if (edgeIdx !== -1) {
+            updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: road.severity };
+            addLog(`🚗 AI: "${updatedGraph.edges[edgeIdx].name}" → ${road.condition} (weight: ${road.severity})`);
+          }
+        }
+
+        addLog(`📝 AI Summary: ${data.result.summary}`);
+        setGraph(updatedGraph);
+        recalculateRoute(updatedGraph);
+        addLog("🔄 Route recalculated after AI traffic analysis");
+      } else {
+        addLog(`⚠ AI could not match any roads in report`);
+      }
+    } catch (err: any) {
+      addLog(`❌ AI analysis failed: ${err.message || "Unknown error"}`);
+    }
+
+    setAudioText("");
+    setLoadingTraffic(false);
+  };
+
+  const handleImageAnalysis = async () => {
+    if (!imageFile) return;
+    const isFlood = analysisMode === "flood";
+    if (isFlood) setLoadingFlood(true);
+    else setLoadingTraffic(true);
+
+    addLog(`📸 AI analyzing image for ${isFlood ? "flooding" : "traffic"}...`);
+
+    try {
+      const base64 = await fileToBase64(imageFile);
+      const roadNames = graph.edges.map((e) => e.name);
+      const nodeNames = graph.nodes.map((n) => n.name);
+
+      const { data, error } = await supabase.functions.invoke("analyze-image", {
+        body: {
+          type: isFlood ? "flood_detection" : "traffic_detection",
+          imageBase64: base64,
+          roadNames,
+          nodeNames,
+        },
+      });
+
+      if (error) throw error;
+      await delay(1000);
+
+      if (isFlood && data?.result) {
+        const r = data.result;
+        addLog(`🌊 AI: Flooding ${r.flooded ? "DETECTED" : "not detected"} — Score: ${r.floodScore}`);
+        addLog(`📝 ${r.description}`);
+
+        if (r.flooded) {
+          const updatedGraph = { ...graph, edges: [...graph.edges], nodes: graph.nodes.map((node) => {
+            const affected = r.affectedNodes?.some((name: string) =>
+              node.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(node.name.toLowerCase())
+            );
+            if (affected) {
+              addLog(`🌊 Flood zone: "${node.name}" — score: ${r.floodScore}`);
+              return { ...node, flooded: true, floodScore: r.floodScore };
+            }
+            return node;
+          })};
+          setGraph(updatedGraph);
+          recalculateRoute(updatedGraph);
+          addLog("🔄 Route recalculated after flood detection");
+        }
+      } else if (!isFlood && data?.result) {
+        const r = data.result;
+        addLog(`🚗 AI: Traffic ${r.congested ? "CONGESTED" : "clear"} — Score: ${r.congestionScore}`);
+        addLog(`📝 ${r.description}`);
+
+        if (r.congested && r.affectedRoads?.length > 0) {
+          const updatedGraph = { ...graph, edges: graph.edges.map((edge) => {
+            const affected = r.affectedRoads.some((name: string) =>
+              edge.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(edge.name.toLowerCase())
+            );
+            if (affected) {
+              addLog(`🚗 Traffic jam: "${edge.name}" → weight: ${r.congestionScore}`);
+              return { ...edge, weight: r.congestionScore };
+            }
+            return edge;
+          }), nodes: [...graph.nodes] };
+          setGraph(updatedGraph);
+          recalculateRoute(updatedGraph);
+          addLog("🔄 Route recalculated after traffic detection");
+        }
+      }
+    } catch (err: any) {
+      addLog(`❌ AI image analysis failed: ${err.message || "Unknown error"}`);
+    }
+
+    setImageFile(null);
+    if (isFlood) setLoadingFlood(false);
+    else setLoadingTraffic(false);
+  };
+
+  // Web Speech API
+  const toggleSpeechRecognition = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      addLog("❌ Speech recognition not supported in this browser");
       return;
     }
 
-    setBestPath(result);
-    const nodeNames = result.path.map((id) => graph.nodes.find((n) => n.id === id)?.name).join(" → ");
-    addLog(`✅ Route found: ${nodeNames} (Total weight: ${result.totalWeight})`);
-  };
-
-  const handleTrafficReport = () => {
-    if (!audioText.trim()) return;
-
-    const text = audioText.toLowerCase();
-    const updatedGraph = {
-      ...graph,
-      edges: graph.edges.map((edge) => {
-        const edgeName = edge.name.toLowerCase();
-        const matchesRoad = text.includes(edgeName);
-        if (!matchesRoad) return edge;
-
-        if (text.includes("tắc") || text.includes("kẹt") || text.includes("jam") || text.includes("blocked") || text.includes("congestion")) {
-          const nextWeight = text.includes("nghiêm trọng") || text.includes("severe") ? 100 : 85;
-          addLog(`🚗 Traffic alert: "${edge.name}" weight updated to ${nextWeight}`);
-          return { ...edge, weight: nextWeight };
-        }
-
-        if (text.includes("thông") || text.includes("clear") || text.includes("free")) {
-          addLog(`🟢 Road cleared: "${edge.name}" weight updated to 10`);
-          return { ...edge, weight: 10 };
-        }
-
-        return edge;
-      }),
-      nodes: [...graph.nodes],
-    };
-
-    const changed = updatedGraph.edges.some((edge, index) => edge.weight !== graph.edges[index].weight);
-    if (!changed) {
-      addLog(`⚠ Could not match road in report: "${audioText}"`);
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      addLog("🎙️ Speech recognition stopped");
+      return;
     }
 
-    setGraph(updatedGraph);
-    setAudioText("");
-    if (changed) {
-      recalculateRoute(updatedGraph);
-      addLog("🔄 Route recalculated after traffic update");
-    }
-  };
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "vi-VN"; // Vietnamese, falls back to English
 
-  const handleFloodImage = () => {
-    if (!imageFile) return;
-
-    addLog(`📸 Analyzing image: ${imageFile.name}...`);
-    const randomIdx = Math.floor(Math.random() * graph.nodes.length);
-
-    const updatedGraph = {
-      ...graph,
-      edges: [...graph.edges],
-      nodes: graph.nodes.map((node, index) => {
-        if (index !== randomIdx) return node;
-        const floodScore = 70 + Math.floor(Math.random() * 30);
-        addLog(`🌊 FLOOD DETECTED near "${node.name}" - flood score: ${floodScore}`);
-        return { ...node, flooded: true, floodScore };
-      }),
+    recognition.onstart = () => {
+      setIsListening(true);
+      addLog("🎙️ Listening... speak now");
     };
 
-    setGraph(updatedGraph);
-    setImageFile(null);
-    recalculateRoute(updatedGraph);
-    addLog("🔄 Route recalculated after flood detection");
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setAudioText(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      addLog(`❌ Speech error: ${event.error}`);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      addLog("🎙️ Speech recognition ended");
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   };
 
   const resetGraph = () => {
@@ -226,17 +315,22 @@ const Demo = () => {
 
   return (
     <div className="min-h-screen bg-surface pt-20 font-body">
+      <style>{`
+        @keyframes loading {
+          0% { width: 0%; }
+          50% { width: 70%; }
+          100% { width: 100%; }
+        }
+      `}</style>
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-8">
         <div className="flex items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tighter uppercase">
               <span className="text-gradient">Live Demo</span> — HCM City Navigation
             </h1>
-            <p className="text-on-surface-variant text-sm mt-2">Interactive graph-based routing with real-time condition updates</p>
+            <p className="text-on-surface-variant text-sm mt-2">AI-powered routing with real-time flood & traffic analysis</p>
           </div>
-          <Link to="/" className="text-on-surface-variant hover:text-on-surface text-sm font-headline uppercase tracking-widest">
-            ← Back
-          </Link>
+          <Link to="/" className="text-on-surface-variant hover:text-on-surface text-sm font-headline uppercase tracking-widest">← Back</Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -245,35 +339,30 @@ const Demo = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="glass rounded-md border border-on-surface/10 p-6">
+            {/* Route finder */}
+            <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
+              {loadingRoute && <LoadingOverlay label="Calculating route..." />}
               <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-primary">Find Route</h3>
               <div className="space-y-3">
                 <div>
                   <label className="text-xs uppercase tracking-widest text-on-surface-variant mb-1 block">Start</label>
                   <select value={startNode} onChange={(e) => setStartNode(e.target.value)} className="w-full bg-surface border border-outline-variant/20 rounded px-3 py-2 text-sm text-on-surface focus:border-primary outline-none">
                     <option value="">Select start point</option>
-                    {graph.nodes.map((node) => (
-                      <option key={node.id} value={node.id}>{node.name}</option>
-                    ))}
+                    {graph.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-widest text-on-surface-variant mb-1 block">End</label>
                   <select value={endNode} onChange={(e) => setEndNode(e.target.value)} className="w-full bg-surface border border-outline-variant/20 rounded px-3 py-2 text-sm text-on-surface focus:border-primary outline-none">
                     <option value="">Select end point</option>
-                    {graph.nodes.map((node) => (
-                      <option key={node.id} value={node.id}>{node.name}</option>
-                    ))}
+                    {graph.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}
                   </select>
                 </div>
-                <button onClick={findRoute} className="w-full bg-primary-container text-primary-container-foreground py-2.5 rounded font-headline font-bold uppercase tracking-widest text-sm active:scale-95 transition-transform">
-                  Find Best Route
+                <button onClick={findRoute} disabled={loadingRoute || !startNode || !endNode} className="w-full bg-primary-container text-primary-container-foreground py-2.5 rounded font-headline font-bold uppercase tracking-widest text-sm active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+                  {loadingRoute ? "Calculating..." : "Find Best Route"}
                 </button>
-                <button onClick={resetGraph} className="w-full border border-outline-variant/20 text-on-surface-variant py-2 rounded text-xs uppercase tracking-widest active:scale-95 transition-transform">
-                  Reset All
-                </button>
+                <button onClick={resetGraph} className="w-full border border-outline-variant/20 text-on-surface-variant py-2 rounded text-xs uppercase tracking-widest active:scale-95 transition-transform">Reset All</button>
               </div>
-
               {bestPath && (
                 <div className="mt-4 p-3 bg-primary/10 border-l-4 border-primary rounded-r text-xs">
                   <div className="font-bold text-primary mb-1">Route Found (Weight: {bestPath.totalWeight})</div>
@@ -282,23 +371,46 @@ const Demo = () => {
               )}
             </div>
 
-            <div className="glass rounded-md border border-on-surface/10 p-6">
+            {/* Traffic report with speech */}
+            <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
+              {loadingTraffic && <LoadingOverlay label="AI analyzing traffic..." />}
               <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-error">Traffic Report</h3>
-              <p className="text-[10px] text-on-surface-variant mb-3">Enter a traffic report (e.g. &quot;Lê Lợi đang bị tắc nghiêm trọng&quot;)</p>
-              <textarea
-                value={audioText}
-                onChange={(e) => setAudioText(e.target.value)}
-                placeholder="Nhập thông tin tắc đường..."
-                className="w-full bg-surface border border-outline-variant/20 rounded px-3 py-2 text-sm text-on-surface focus:border-destructive outline-none resize-none h-20"
-              />
-              <button onClick={handleTrafficReport} className="w-full mt-2 bg-destructive/15 text-error py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform">
-                Report Traffic
+              <p className="text-[10px] text-on-surface-variant mb-3">Type or use voice input. AI will analyze and update road weights.</p>
+              <div className="relative">
+                <textarea
+                  value={audioText}
+                  onChange={(e) => setAudioText(e.target.value)}
+                  placeholder="Describe traffic conditions..."
+                  className="w-full bg-surface border border-outline-variant/20 rounded px-3 py-2 pr-12 text-sm text-on-surface focus:border-destructive outline-none resize-none h-20"
+                />
+                <button
+                  onClick={toggleSpeechRecognition}
+                  className={`absolute right-2 top-2 p-2 rounded-full transition-all active:scale-90 ${isListening ? "bg-error/20 text-error animate-pulse" : "bg-on-surface/5 text-on-surface-variant hover:text-on-surface"}`}
+                  title={isListening ? "Stop listening" : "Start voice input"}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+              </div>
+              <button onClick={handleTrafficReport} disabled={loadingTraffic || !audioText.trim()} className="w-full mt-2 bg-destructive/15 text-error py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+                {loadingTraffic ? "Analyzing..." : "Analyze with AI"}
               </button>
             </div>
 
-            <div className="glass rounded-md border border-on-surface/10 p-6">
-              <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-tertiary">Flood Detection</h3>
-              <p className="text-[10px] text-on-surface-variant mb-3">Upload an image to detect flooding (simulated AI analysis)</p>
+            {/* Image analysis (flood + traffic) */}
+            <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
+              {loadingFlood && <LoadingOverlay label="AI analyzing image..." />}
+              <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-tertiary">Image Analysis</h3>
+              <p className="text-[10px] text-on-surface-variant mb-3">Upload an image — AI will detect flooding or traffic jams</p>
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={() => setAnalysisMode("flood")}
+                  className={`flex-1 py-1.5 rounded text-xs font-headline uppercase tracking-widest transition-all active:scale-95 ${analysisMode === "flood" ? "bg-tertiary/20 text-tertiary font-bold" : "bg-on-surface/5 text-on-surface-variant"}`}
+                >🌊 Flood</button>
+                <button
+                  onClick={() => setAnalysisMode("traffic")}
+                  className={`flex-1 py-1.5 rounded text-xs font-headline uppercase tracking-widest transition-all active:scale-95 ${analysisMode === "traffic" ? "bg-error/20 text-error font-bold" : "bg-on-surface/5 text-on-surface-variant"}`}
+                >🚗 Traffic</button>
+              </div>
               <input
                 type="file"
                 accept="image/*"
@@ -306,12 +418,13 @@ const Demo = () => {
                 className="w-full text-xs text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-tertiary/20 file:text-tertiary"
               />
               {imageFile && (
-                <button onClick={handleFloodImage} className="w-full mt-2 bg-tertiary/20 text-tertiary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform">
-                  Analyze for Flood
+                <button onClick={handleImageAnalysis} disabled={loadingFlood || loadingTraffic} className="w-full mt-2 bg-tertiary/20 text-tertiary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+                  {loadingFlood || loadingTraffic ? "Analyzing..." : `Analyze for ${analysisMode === "flood" ? "Flood" : "Traffic"}`}
                 </button>
               )}
             </div>
 
+            {/* Legend */}
             <div className="glass rounded-md border border-on-surface/10 p-4">
               <h4 className="font-headline font-bold text-xs uppercase tracking-widest mb-3 text-on-surface-variant">Legend</h4>
               <div className="space-y-2 text-xs">
@@ -330,9 +443,7 @@ const Demo = () => {
           <h4 className="font-headline font-bold text-xs uppercase tracking-widest mb-3 text-on-surface-variant">System Log</h4>
           <div ref={logRef} className="h-32 overflow-y-auto text-xs font-label text-on-surface-variant space-y-1">
             {log.length === 0 && <div className="text-on-surface-variant/40">Waiting for actions...</div>}
-            {log.map((entry, index) => (
-              <div key={index}>{entry}</div>
-            ))}
+            {log.map((entry, index) => <div key={index}>{entry}</div>)}
           </div>
         </div>
       </div>
