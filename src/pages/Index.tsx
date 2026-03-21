@@ -149,7 +149,7 @@ const Index = () => (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             { icon: "👁", label: "The Environment Observer", desc: "Ingests CCTV, News, and Weather data to build a real-time semantic understanding of every street corner.", accent: "primary" },
-            { icon: "🧭", label: "The Smart Navigator", desc: "Hyper-precise pathfinding that accounts for predicted water levels and traffic density hours before it peaks.", accent: "tertiary" },
+            { icon: "🧭", label: "The Smart Navigator", desc: "A Multi-Agent System where specialized agents debate to find the \"True Best Path\" — resolving conflicting data from different sources to avoid hazards like floods or accidents.", accent: "tertiary" },
             { icon: "👥", label: "The Multi-Agent Simulator", desc: "Simulates thousands of possible traffic flows simultaneously to find the most efficient macro-solution for the whole city.", accent: "secondary" },
           ].map((s) => (
             <div key={s.label} className="p-6 bg-surface-container-low rounded-md border border-on-surface/5 flex gap-5 items-start hover:translate-y-[-4px] transition-transform duration-300">
