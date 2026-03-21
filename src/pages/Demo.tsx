@@ -338,6 +338,8 @@ const Demo = () => {
     setLoadingAudio(false);
   };
 
+  const TARGET_NODE_ID = "n17"; // Ngã 4 Phú Nhuận
+
   const handleImageAnalysis = async () => {
     if (!imageFile) return;
     const isFlood = analysisMode === "flood";
