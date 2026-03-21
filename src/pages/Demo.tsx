@@ -8,6 +8,10 @@ import { Loader2, Mic, MicOff, Upload } from "lucide-react";
 
 const MAP_CENTER: [number, number] = [10.79, 106.69];
 
+// Strip Vietnamese diacritics for fuzzy matching
+const stripDiacritics = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+
 const getEdgeColor = (weight: number) => {
   if (weight <= 20) return "#3ce36a";
   if (weight <= 50) return "#a5c8ff";
