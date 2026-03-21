@@ -230,68 +230,67 @@ const Index = () => (
     </Section>
 
     {/* TECH */}
-    <Section id="tech" className="py-32 bg-surface-container">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <span className="text-tertiary font-label text-sm font-bold uppercase tracking-widest block mb-4">Core Technology</span>
-            <h2 className="font-headline text-5xl font-black tracking-tighter mb-8 uppercase">The Eyes and Ears<br />of the City.</h2>
-            <div className="space-y-6">
-              <div className="flex gap-4 p-4 rounded bg-surface/40">
-                <span className="text-primary text-2xl">📊</span>
-                <div>
-                  <h5 className="font-bold text-on-surface mb-1">Unstructured Data Fusion</h5>
-                  <p className="text-sm text-on-surface-variant">Converting live radio news, social alerts, and CCTV footage into actionable vector data.</p>
-                </div>
-              </div>
-              <div className="flex gap-4 p-4 rounded bg-surface/40">
-                <span className="text-primary text-2xl">🔗</span>
-                <div>
-                  <h5 className="font-bold text-on-surface mb-1">Dynamic Graph Maps</h5>
-                  <p className="text-sm text-on-surface-variant">The city is mapped as a node-edge network where every connection's "weight" changes in real-time based on conditions.</p>
-                </div>
-              </div>
-              <div className="flex gap-4 p-4 rounded bg-surface/40">
-                <span className="text-primary text-2xl">🤖</span>
-                <div>
-                  <h5 className="font-bold text-on-surface mb-1">AI Agent Routing</h5>
-                  <p className="text-sm text-on-surface-variant">LLM-powered agents analyze images and audio to update road conditions and find optimal paths in real-time.</p>
-                </div>
-              </div>
+    <Section id="tech" className="py-32 bg-surface-container relative overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--primary)) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      <div className="max-w-7xl mx-auto px-8 relative z-10">
+        <div className="text-center mb-16">
+          <span className="text-tertiary font-label text-sm font-bold uppercase tracking-widest block mb-4">Core Technology</span>
+          <h2 className="font-headline text-5xl md:text-6xl font-black tracking-tighter mb-6 uppercase">The Eyes and Ears<br />of the City.</h2>
+          <p className="text-on-surface-variant font-body text-lg max-w-2xl mx-auto">Three layers of perception working in concert — converting the city's chaos into structured, actionable intelligence.</p>
+        </div>
+
+        <div className="relative rounded-xl overflow-hidden border border-on-surface/10 mb-16 group">
+          <img src={cityEyesEars} alt="AI Data Fusion Command Center — CCTV feeds, audio transcription, and neural processing" className="w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" />
+          <div className="absolute bottom-0 left-0 right-0 p-8 flex items-end justify-between">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 bg-tertiary rounded-full animate-pulse shadow-[0_0_8px_hsl(var(--tertiary))]" />
+              <span className="text-xs font-label font-bold uppercase tracking-widest text-on-surface/80">Multi-Source Fusion Active</span>
             </div>
+            <span className="text-[10px] font-label text-on-surface-variant/50 uppercase tracking-wider">6 streams · 3 agents · real-time</span>
           </div>
-          <div className="relative glass rounded-md p-8 border border-on-surface/5 glow-blue overflow-hidden">
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <div className="w-full h-full bg-[radial-gradient(circle_at_center,_hsl(var(--primary))_0%,_transparent_70%)]" />
-            </div>
-            <div className="relative flex flex-col gap-6">
-              <div className="flex justify-between items-center px-4 py-2 bg-surface-container-high rounded border border-on-surface/5">
-                <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Incoming Stream: District 1</span>
-                <span className="text-tertiary flex items-center gap-2 text-xs">
-                  <span className="w-2 h-2 bg-tertiary rounded-full animate-pulse" /> LIVE
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="aspect-video bg-surface rounded flex items-center justify-center text-xs text-on-surface-variant/50 border border-on-surface/5">NEWS FEED [TEXT]</div>
-                <div className="aspect-video bg-surface rounded flex items-center justify-center text-xs text-on-surface-variant/50 border border-on-surface/5">WEATHER RADAR</div>
-              </div>
-              <div className="h-40 bg-surface/80 rounded flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 p-4">
-                  <div className="w-full h-full border border-primary/20 rounded relative">
-                    <div className="absolute top-1/2 left-1/4 w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_hsl(var(--primary))]" />
-                    <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-error rounded-full shadow-[0_0_10px_hsl(var(--error))]" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-1/2 h-1/2 border-2 border-dashed border-primary/10 rounded-full animate-[spin_10s_linear_infinite]" />
-                    </div>
-                  </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: "📊",
+              title: "Unstructured Data Fusion",
+              desc: "Converting live radio news, social alerts, and CCTV footage into actionable vector data.",
+              stat: "6+",
+              statLabel: "Data Sources",
+              accent: "primary"
+            },
+            {
+              icon: "🔗",
+              title: "Dynamic Graph Maps",
+              desc: "The city mapped as a node-edge network where every connection's weight changes in real-time.",
+              stat: "~200",
+              statLabel: "Live Edges",
+              accent: "tertiary"
+            },
+            {
+              icon: "🤖",
+              title: "AI Agent Routing",
+              desc: "LLM-powered agents analyze images and audio to update road conditions and find optimal paths.",
+              stat: "<2s",
+              statLabel: "Response Time",
+              accent: "secondary"
+            }
+          ].map((item, i) => (
+            <div key={i} className="group/card relative p-6 rounded-lg bg-surface/60 border border-on-surface/5 hover:border-on-surface/15 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+              <div className="flex items-start justify-between mb-4">
+                <span className="text-3xl">{item.icon}</span>
+                <div className="text-right">
+                  <div className={`text-2xl font-headline font-black text-${item.accent}`}>{item.stat}</div>
+                  <div className="text-[10px] font-label uppercase tracking-wider text-on-surface-variant/50">{item.statLabel}</div>
                 </div>
-                <div className="z-10 text-center">
-                  <div className="text-primary font-headline font-bold text-2xl uppercase tracking-tighter">Processing...</div>
-                  <div className="text-[10px] uppercase font-label text-on-surface-variant/50">LLM-Vision Analysis in Progress</div>
-                </div>
               </div>
+              <h5 className="font-bold text-on-surface mb-2 text-lg">{item.title}</h5>
+              <p className="text-sm text-on-surface-variant leading-relaxed">{item.desc}</p>
+              <div className={`absolute bottom-0 left-6 right-6 h-[2px] bg-${item.accent}/0 group-hover/card:bg-${item.accent}/60 transition-all duration-500`} />
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </Section>
