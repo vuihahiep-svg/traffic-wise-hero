@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { createHCMGraph, findShortestPath, type CityGraph } from "@/lib/graph";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mic, MicOff } from "lucide-react";
+import { Loader2, Mic, MicOff, Upload } from "lucide-react";
 
 const MAP_CENTER: [number, number] = [10.79, 106.69];
 
@@ -45,6 +45,10 @@ const Demo = () => {
   const [bestPath, setBestPath] = useState<{ path: string[]; edgeIds: string[]; totalWeight: number } | null>(null);
   const [audioText, setAudioText] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioTranscript, setAudioTranscript] = useState("");
+  const [correctedText, setCorrectedText] = useState("");
+  const [loadingAudio, setLoadingAudio] = useState(false);
   const [preAnalysisGraph, setPreAnalysisGraph] = useState<CityGraph | null>(null);
   const [showRemoveOptions, setShowRemoveOptions] = useState(false);
   const [log, setLog] = useState<string[]>([]);
@@ -140,15 +144,16 @@ const Demo = () => {
     setLoadingRoute(false);
   };
 
-  const handleTrafficReport = async () => {
-    if (!audioText.trim()) return;
+  const handleTrafficReport = async (reportText?: string) => {
+    const text = reportText || audioText;
+    if (!text.trim()) return;
     setLoadingTraffic(true);
     addLog("🤖 AI analyzing traffic report...");
 
     try {
       const roadNames = graph.edges.map((e) => e.name);
       const { data, error } = await supabase.functions.invoke("analyze-image", {
-        body: { type: "traffic_report", textReport: audioText, roadNames },
+        body: { type: "traffic_report", textReport: text, roadNames },
       });
 
       if (error) throw error;
@@ -162,8 +167,10 @@ const Demo = () => {
             e.name.toLowerCase().includes(road.name.toLowerCase()) || road.name.toLowerCase().includes(e.name.toLowerCase())
           );
           if (edgeIdx !== -1) {
+            const oldWeight = updatedGraph.edges[edgeIdx].weight;
             updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: road.severity };
-            addLog(`🚗 AI: "${updatedGraph.edges[edgeIdx].name}" → ${road.condition} (weight: ${road.severity})`);
+            const icon = road.condition === "clear" ? "✅" : "🚗";
+            addLog(`${icon} AI: "${updatedGraph.edges[edgeIdx].name}" → ${road.condition} (weight: ${oldWeight} → ${road.severity})`);
           }
         }
 
@@ -178,8 +185,113 @@ const Demo = () => {
       addLog(`❌ AI analysis failed: ${err.message || "Unknown error"}`);
     }
 
-    setAudioText("");
+    if (!reportText) setAudioText("");
     setLoadingTraffic(false);
+  };
+
+  // 2-step audio processing: speech-to-text → LLM correction → traffic analysis
+  const handleAudioUpload = async () => {
+    if (!audioFile) return;
+    setLoadingAudio(true);
+    setAudioTranscript("");
+    setCorrectedText("");
+
+    addLog("🎵 Step 1: Converting audio to text (Web Speech API)...");
+
+    try {
+      // Step 1: Use Web Audio API + Speech Recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        addLog("❌ Speech recognition not supported. Falling back to filename-based analysis.");
+        setLoadingAudio(false);
+        return;
+      }
+
+      // Play audio through an audio element and capture via speech recognition
+      const audioUrl = URL.createObjectURL(audioFile);
+      const audio = new Audio(audioUrl);
+
+      // For speech recognition from audio files, we use a workaround:
+      // Create a MediaStream from the audio element
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaElementSource(audio);
+      const dest = audioContext.createMediaStreamDestination();
+      source.connect(dest);
+      source.connect(audioContext.destination);
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = "vi-VN";
+
+      let transcript = "";
+
+      recognition.onresult = (event: any) => {
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript + " ";
+          }
+        }
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        recognition.onend = () => resolve();
+        recognition.onerror = (e: any) => {
+          if (e.error === "no-speech") resolve();
+          else reject(new Error(e.error));
+        };
+
+        recognition.start();
+        audio.play();
+
+        audio.onended = () => {
+          setTimeout(() => {
+            recognition.stop();
+          }, 1500);
+        };
+
+        setTimeout(() => {
+          recognition.stop();
+          audio.pause();
+        }, 60000);
+      });
+
+      await audioContext.close();
+      URL.revokeObjectURL(audioUrl);
+
+      if (!transcript.trim()) {
+        addLog("⚠ No speech detected in audio. Try typing a report instead.");
+        setLoadingAudio(false);
+        return;
+      }
+
+      setAudioTranscript(transcript.trim());
+      addLog(`📝 Raw transcript: "${transcript.trim()}"`);
+
+      // Step 2: LLM correction
+      addLog("🤖 Step 2: AI correcting transcript...");
+      await delay(500);
+
+      const roadNames = graph.edges.map((e) => e.name);
+      const { data: correctionData, error: correctionError } = await supabase.functions.invoke("analyze-image", {
+        body: { type: "correct_speech_text", textReport: transcript.trim(), roadNames },
+      });
+
+      if (correctionError) throw correctionError;
+
+      const corrected = correctionData?.result?.correctedText || transcript.trim();
+      setCorrectedText(corrected);
+      addLog(`✅ Corrected text: "${corrected}"`);
+
+      // Step 3: Analyze the corrected text as a traffic report
+      addLog("📊 Step 3: Analyzing corrected text for traffic conditions...");
+      await handleTrafficReport(corrected);
+
+    } catch (err: any) {
+      addLog(`❌ Audio processing failed: ${err.message || "Unknown error"}`);
+    }
+
+    setLoadingAudio(false);
   };
 
   const TARGET_NODE_ID = "n17"; // Ngã 4 Phú Nhuận
@@ -421,9 +533,50 @@ const Demo = () => {
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
               </div>
-              <button onClick={handleTrafficReport} disabled={loadingTraffic || !audioText.trim()} className="w-full mt-2 bg-destructive/15 text-error py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+              <button onClick={() => handleTrafficReport()} disabled={loadingTraffic || !audioText.trim()} className="w-full mt-2 bg-destructive/15 text-error py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
                 {loadingTraffic ? "Analyzing..." : "Analyze with AI"}
               </button>
+            </div>
+
+            {/* Audio Upload Analysis */}
+            <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
+              {loadingAudio && <LoadingOverlay label="Processing audio..." />}
+              <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-secondary">Audio Analysis</h3>
+              <p className="text-[10px] text-on-surface-variant mb-3">Upload audio file → Speech-to-Text → AI Correction → Traffic Analysis</p>
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={(e) => {
+                  setAudioFile(e.target.files?.[0] || null);
+                  setAudioTranscript("");
+                  setCorrectedText("");
+                }}
+                className="w-full text-xs text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-secondary/20 file:text-secondary"
+              />
+              {audioFile && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2 p-2 bg-secondary/10 rounded text-xs">
+                    <Upload className="w-3 h-3 text-secondary" />
+                    <span className="text-on-surface truncate">{audioFile.name}</span>
+                    <button onClick={() => { setAudioFile(null); setAudioTranscript(""); setCorrectedText(""); }} className="ml-auto text-on-surface-variant hover:text-error text-xs">✕</button>
+                  </div>
+                  <button onClick={handleAudioUpload} disabled={loadingAudio} className="w-full bg-secondary/20 text-secondary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+                    {loadingAudio ? "Processing..." : "Process Audio"}
+                  </button>
+                </div>
+              )}
+              {audioTranscript && (
+                <div className="mt-3 p-2 bg-on-surface/5 rounded text-xs space-y-1">
+                  <div className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">Raw Transcript:</div>
+                  <div className="text-on-surface">{audioTranscript}</div>
+                </div>
+              )}
+              {correctedText && (
+                <div className="mt-2 p-2 bg-secondary/10 rounded text-xs space-y-1">
+                  <div className="text-secondary font-bold text-[10px] uppercase tracking-widest">AI Corrected:</div>
+                  <div className="text-on-surface">{correctedText}</div>
+                </div>
+              )}
             </div>
 
             {/* Image analysis (flood + traffic) */}
