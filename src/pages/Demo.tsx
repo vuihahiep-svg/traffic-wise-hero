@@ -158,73 +158,114 @@ const Demo = () => {
     setLoadingRoute(false);
   };
 
-  const syncMediaSeed = async () => {
+  const syncMediaSeed = useCallback(async (silent = false) => {
     setLoadingSync(true);
-    addLog("📡 Fetching latest route scores from API...");
+    if (!silent) addLog("📡 Fetching latest route scores from API...");
     await delay(1000);
 
     try {
       const { data, error } = await supabase.functions.invoke("media-seed-latest");
       if (error) throw error;
 
-      const routes: { route: string; score: number; reason: string }[] = data?.routes || [];
+      const routes: { route: string; score: number; reason: string; node?: boolean }[] = data?.routes || [];
       if (routes.length === 0) {
-        addLog("⚠ No route scores returned from API");
+        if (!silent) addLog("⚠ No route scores returned from API");
         setLoadingSync(false);
         return;
       }
 
-      const updatedGraph = { ...graph, edges: [...graph.edges], nodes: [...graph.nodes] };
-      let matched = 0;
+      setGraph((prevGraph) => {
+        const updatedGraph = {
+          ...prevGraph,
+          edges: prevGraph.edges.map((e) => ({ ...e })),
+          nodes: prevGraph.nodes.map((n) => ({ ...n })),
+        };
+        let matched = 0;
 
-      for (const entry of routes) {
-        // Try to match route name to edges
-        const edgeIdx = updatedGraph.edges.findIndex((e) =>
-          e.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-          entry.route.toLowerCase().includes(e.name.toLowerCase())
-        );
-        if (edgeIdx !== -1) {
-          const oldWeight = updatedGraph.edges[edgeIdx].weight;
-          updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: entry.score };
-          addLog(`📊 API: "${updatedGraph.edges[edgeIdx].name}" → score ${oldWeight} → ${entry.score} (${entry.reason})`);
-          matched++;
+        for (const entry of routes) {
+          if (entry.node) {
+            // node: true → this is a crossroad/intersection, update the node AND all surrounding roads
+            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
+              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+              entry.route.toLowerCase().includes(n.name.toLowerCase())
+            );
+            if (nodeIdx !== -1) {
+              const matchedNode = updatedGraph.nodes[nodeIdx];
+              const isFlooded = entry.score >= 50;
+              updatedGraph.nodes[nodeIdx] = {
+                ...matchedNode,
+                flooded: isFlooded,
+                floodScore: entry.score,
+              };
+              addLog(`${isFlooded ? '🌊' : '📍'} API node: "${matchedNode.name}" → score ${entry.score} (${entry.reason})`);
+              matched++;
+
+              // Update ALL surrounding edges connected to this node
+              updatedGraph.edges.forEach((edge, eIdx) => {
+                if (edge.from === matchedNode.id || edge.to === matchedNode.id) {
+                  const oldW = edge.weight;
+                  const newW = Math.max(edge.weight, Math.round(entry.score * 0.8));
+                  updatedGraph.edges[eIdx] = { ...edge, weight: newW };
+                  if (newW !== oldW) {
+                    addLog(`  ↳ Road "${edge.name}" weight ${oldW} → ${newW} (near ${matchedNode.name})`);
+                  }
+                }
+              });
+            }
+          } else {
+            // node: false or missing → this is a road/edge
+            const edgeIdx = updatedGraph.edges.findIndex((e) =>
+              e.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+              entry.route.toLowerCase().includes(e.name.toLowerCase())
+            );
+            if (edgeIdx !== -1) {
+              const oldWeight = updatedGraph.edges[edgeIdx].weight;
+              updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: entry.score };
+              addLog(`📊 API: "${updatedGraph.edges[edgeIdx].name}" → score ${oldWeight} → ${entry.score} (${entry.reason})`);
+              matched++;
+            }
+
+            // Also check nodes for non-node entries
+            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
+              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
+              entry.route.toLowerCase().includes(n.name.toLowerCase())
+            );
+            if (nodeIdx !== -1) {
+              updatedGraph.nodes[nodeIdx] = {
+                ...updatedGraph.nodes[nodeIdx],
+                flooded: entry.score >= 50,
+                floodScore: entry.score,
+              };
+              matched++;
+            }
+          }
         }
 
-        // Also try matching to nodes (for flood/intersection scores)
-        const nodeIdx = updatedGraph.nodes.findIndex((n) =>
-          n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-          entry.route.toLowerCase().includes(n.name.toLowerCase())
-        );
-        if (nodeIdx !== -1 && entry.score >= 50) {
-          updatedGraph.nodes[nodeIdx] = {
-            ...updatedGraph.nodes[nodeIdx],
-            flooded: true,
-            floodScore: entry.score,
-          };
-          addLog(`🌊 API: "${updatedGraph.nodes[nodeIdx].name}" marked flooded (score: ${entry.score})`);
-          matched++;
-        } else if (nodeIdx !== -1 && entry.score < 50) {
-          updatedGraph.nodes[nodeIdx] = {
-            ...updatedGraph.nodes[nodeIdx],
-            flooded: false,
-            floodScore: entry.score,
-          };
-          matched++;
-        }
-      }
+        addLog(`✅ Synced ${routes.length} scores (${matched} matched)`);
+        return updatedGraph;
+      });
 
-      addLog(`✅ Synced ${routes.length} scores from API (${matched} matched to graph)`);
-      setGraph(updatedGraph);
-      recalculateRoute(updatedGraph);
-      if (startNode && endNode) {
-        addLog("🔄 Route recalculated with API scores");
-      }
+      // Recalculate after state update
+      setTimeout(() => {
+        setGraph((g) => {
+          recalculateRoute(g);
+          return g;
+        });
+      }, 100);
     } catch (err: any) {
-      addLog(`❌ API sync failed: ${err.message || "Unknown error"}`);
+      if (!silent) addLog(`❌ API sync failed: ${err.message || "Unknown error"}`);
     }
 
     setLoadingSync(false);
-  };
+  }, [addLog, recalculateRoute]);
+
+  // Auto-sync every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      syncMediaSeed(true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [syncMediaSeed]);
 
   const handleTrafficReport = async (reportText?: string) => {
     const text = reportText || audioText;
