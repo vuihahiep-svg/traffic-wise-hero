@@ -273,7 +273,70 @@ const Demo = () => {
     setLoadingAudio(false);
   };
 
-  const TARGET_NODE_ID = "n17"; // Ngã 4 Phú Nhuận
+  // Process audio file: convert to base64 → send to AI for transcription → correct → analyze
+  const handleAudioFileUpload = async () => {
+    if (!audioFile) return;
+    setLoadingAudio(true);
+    setAudioTranscript("");
+    setCorrectedText("");
+
+    try {
+      addLog("🎵 Step 1: Sending audio file to AI for transcription...");
+      await delay(500);
+
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(audioFile);
+      });
+
+      const mimeType = audioFile.type || "audio/mpeg";
+
+      const { data, error } = await supabase.functions.invoke("analyze-image", {
+        body: { type: "transcribe_audio", audioBase64: base64, mimeType },
+      });
+
+      if (error) throw error;
+
+      const transcript = data?.result?.transcript || "";
+      if (!transcript.trim()) {
+        addLog("⚠ No speech detected in audio file.");
+        setLoadingAudio(false);
+        return;
+      }
+
+      setAudioTranscript(transcript.trim());
+      addLog(`📝 Raw transcript: "${transcript.trim()}"`);
+
+      // Step 2: LLM correction
+      addLog("🤖 Step 2: AI correcting transcript...");
+      await delay(500);
+
+      const roadNames = graph.edges.map((e) => e.name);
+      const { data: correctionData, error: correctionError } = await supabase.functions.invoke("analyze-image", {
+        body: { type: "correct_speech_text", textReport: transcript.trim(), roadNames },
+      });
+
+      if (correctionError) throw correctionError;
+
+      const corrected = correctionData?.result?.correctedText || transcript.trim();
+      setCorrectedText(corrected);
+      addLog(`✅ Corrected text: "${corrected}"`);
+
+      // Step 3: Traffic analysis
+      addLog("📊 Step 3: Analyzing corrected text for traffic conditions...");
+      await handleTrafficReport(corrected);
+
+    } catch (err: any) {
+      addLog(`❌ Audio file processing failed: ${err.message || "Unknown error"}`);
+    }
+
+    setLoadingAudio(false);
+  };
 
   const handleImageAnalysis = async () => {
     if (!imageFile) return;
