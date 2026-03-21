@@ -232,10 +232,10 @@ const Demo = () => {
             }
 
             // Also check nodes for non-node entries
-            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
-              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-              entry.route.toLowerCase().includes(n.name.toLowerCase())
-            );
+            const nodeIdx = updatedGraph.nodes.findIndex((n) => {
+              const nameNorm = stripDiacritics(n.name);
+              return nameNorm.includes(routeNorm2) || routeNorm2.includes(nameNorm);
+            });
             if (nodeIdx !== -1) {
               updatedGraph.nodes[nodeIdx] = {
                 ...updatedGraph.nodes[nodeIdx],
