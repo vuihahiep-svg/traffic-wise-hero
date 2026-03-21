@@ -8,6 +8,10 @@ import { Loader2, Mic, MicOff, Upload } from "lucide-react";
 
 const MAP_CENTER: [number, number] = [10.79, 106.69];
 
+// Strip Vietnamese diacritics for fuzzy matching
+const stripDiacritics = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+
 const getEdgeColor = (weight: number) => {
   if (weight <= 20) return "#3ce36a";
   if (weight <= 50) return "#a5c8ff";
@@ -185,10 +189,11 @@ const Demo = () => {
         for (const entry of routes) {
           if (entry.node) {
             // node: true → this is a crossroad/intersection, update the node AND all surrounding roads
-            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
-              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-              entry.route.toLowerCase().includes(n.name.toLowerCase())
-            );
+            const routeNorm = stripDiacritics(entry.route);
+            const nodeIdx = updatedGraph.nodes.findIndex((n) => {
+              const nameNorm = stripDiacritics(n.name);
+              return nameNorm.includes(routeNorm) || routeNorm.includes(nameNorm);
+            });
             if (nodeIdx !== -1) {
               const matchedNode = updatedGraph.nodes[nodeIdx];
               const isFlooded = entry.score >= 50;
@@ -214,10 +219,11 @@ const Demo = () => {
             }
           } else {
             // node: false or missing → this is a road/edge
-            const edgeIdx = updatedGraph.edges.findIndex((e) =>
-              e.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-              entry.route.toLowerCase().includes(e.name.toLowerCase())
-            );
+            const routeNorm2 = stripDiacritics(entry.route);
+            const edgeIdx = updatedGraph.edges.findIndex((e) => {
+              const nameNorm = stripDiacritics(e.name);
+              return nameNorm.includes(routeNorm2) || routeNorm2.includes(nameNorm);
+            });
             if (edgeIdx !== -1) {
               const oldWeight = updatedGraph.edges[edgeIdx].weight;
               updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: entry.score };
@@ -226,10 +232,10 @@ const Demo = () => {
             }
 
             // Also check nodes for non-node entries
-            const nodeIdx = updatedGraph.nodes.findIndex((n) =>
-              n.name.toLowerCase().includes(entry.route.toLowerCase()) ||
-              entry.route.toLowerCase().includes(n.name.toLowerCase())
-            );
+            const nodeIdx = updatedGraph.nodes.findIndex((n) => {
+              const nameNorm = stripDiacritics(n.name);
+              return nameNorm.includes(routeNorm2) || routeNorm2.includes(nameNorm);
+            });
             if (nodeIdx !== -1) {
               updatedGraph.nodes[nodeIdx] = {
                 ...updatedGraph.nodes[nodeIdx],
@@ -286,9 +292,11 @@ const Demo = () => {
         const updatedGraph = { ...graph, edges: [...graph.edges], nodes: [...graph.nodes] };
 
         for (const road of data.result.roads) {
-          const edgeIdx = updatedGraph.edges.findIndex((e) =>
-            e.name.toLowerCase().includes(road.name.toLowerCase()) || road.name.toLowerCase().includes(e.name.toLowerCase())
-          );
+          const roadNorm = stripDiacritics(road.name);
+          const edgeIdx = updatedGraph.edges.findIndex((e) => {
+            const nameNorm = stripDiacritics(e.name);
+            return nameNorm.includes(roadNorm) || roadNorm.includes(nameNorm);
+          });
           if (edgeIdx !== -1) {
             const oldWeight = updatedGraph.edges[edgeIdx].weight;
             updatedGraph.edges[edgeIdx] = { ...updatedGraph.edges[edgeIdx], weight: road.severity };
