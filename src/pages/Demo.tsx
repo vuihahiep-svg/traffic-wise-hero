@@ -45,6 +45,10 @@ const Demo = () => {
   const [bestPath, setBestPath] = useState<{ path: string[]; edgeIds: string[]; totalWeight: number } | null>(null);
   const [audioText, setAudioText] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioTranscript, setAudioTranscript] = useState("");
+  const [correctedText, setCorrectedText] = useState("");
+  const [loadingAudio, setLoadingAudio] = useState(false);
   const [preAnalysisGraph, setPreAnalysisGraph] = useState<CityGraph | null>(null);
   const [showRemoveOptions, setShowRemoveOptions] = useState(false);
   const [log, setLog] = useState<string[]>([]);
