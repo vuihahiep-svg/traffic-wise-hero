@@ -443,9 +443,23 @@ const Demo = () => {
                 className="w-full text-xs text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-tertiary/20 file:text-tertiary"
               />
               {imageFile && (
-                <button onClick={handleImageAnalysis} disabled={loadingFlood || loadingTraffic} className="w-full mt-2 bg-tertiary/20 text-tertiary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
-                  {loadingFlood || loadingTraffic ? "Analyzing..." : `Analyze for ${analysisMode === "flood" ? "Flood" : "Traffic"}`}
-                </button>
+                <div className="mt-3 space-y-2">
+                  <div className="relative rounded overflow-hidden border border-on-surface/10">
+                    <img
+                      src={URL.createObjectURL(imageFile)}
+                      alt="Preview"
+                      className="w-full h-32 object-cover"
+                    />
+                    <button
+                      onClick={() => setImageFile(null)}
+                      className="absolute top-1 right-1 bg-surface/80 text-on-surface-variant hover:text-error rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold backdrop-blur-sm transition-colors active:scale-90"
+                      title="Remove image"
+                    >✕</button>
+                  </div>
+                  <button onClick={handleImageAnalysis} disabled={loadingFlood || loadingTraffic} className="w-full bg-tertiary/20 text-tertiary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+                    {loadingFlood || loadingTraffic ? "Analyzing..." : `Analyze for ${analysisMode === "flood" ? "Flood" : "Traffic"}`}
+                  </button>
+                </div>
               )}
             </div>
 
