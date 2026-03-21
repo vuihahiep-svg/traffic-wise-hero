@@ -667,7 +667,7 @@ const Demo = () => {
                 <button onClick={findRoute} disabled={loadingRoute || !startNode || !endNode} className="w-full bg-primary-container text-primary-container-foreground py-2.5 rounded font-headline font-bold uppercase tracking-widest text-sm active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
                   {loadingRoute ? "Calculating..." : "Find Best Route"}
                 </button>
-                <button onClick={syncMediaSeed} disabled={loadingSync} className="w-full bg-tertiary/15 text-tertiary py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none relative overflow-hidden">
+                <button onClick={() => syncMediaSeed(false)} disabled={loadingSync} className="w-full bg-tertiary/15 text-tertiary py-2.5 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none relative overflow-hidden">
                   {loadingSync ? "Syncing API..." : "📡 Sync Scores from API"}
                 </button>
                 <button onClick={resetGraph} className="w-full border border-outline-variant/20 text-on-surface-variant py-2 rounded text-xs uppercase tracking-widest active:scale-95 transition-transform">Reset All</button>
