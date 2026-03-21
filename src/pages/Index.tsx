@@ -216,7 +216,7 @@ const Index = () => (
         <div className="flex flex-col lg:flex-row gap-16 items-center">
           <div className="flex-1 space-y-8">
             <h2 className="font-headline text-5xl font-black tracking-tighter uppercase leading-tight">
-              From Prediction to Strategy:<br /><span className="text-gradient">The "Toàn Cảnh" Dashboard.</span>
+              From Prediction to Strategy:<br /><span className="text-gradient">The Panoramic Dashboard.</span>
             </h2>
             <p className="font-body text-lg text-on-surface-variant">
               A bird's eye view for city planners. Transform raw traffic data into high-level urban strategy reports automatically.
