@@ -538,6 +538,47 @@ const Demo = () => {
               </button>
             </div>
 
+            {/* Audio Upload Analysis */}
+            <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
+              {loadingAudio && <LoadingOverlay label="Processing audio..." />}
+              <h3 className="font-headline font-bold uppercase tracking-tight mb-4 text-secondary">Audio Analysis</h3>
+              <p className="text-[10px] text-on-surface-variant mb-3">Upload audio file → Speech-to-Text → AI Correction → Traffic Analysis</p>
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={(e) => {
+                  setAudioFile(e.target.files?.[0] || null);
+                  setAudioTranscript("");
+                  setCorrectedText("");
+                }}
+                className="w-full text-xs text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-secondary/20 file:text-secondary"
+              />
+              {audioFile && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2 p-2 bg-secondary/10 rounded text-xs">
+                    <Upload className="w-3 h-3 text-secondary" />
+                    <span className="text-on-surface truncate">{audioFile.name}</span>
+                    <button onClick={() => { setAudioFile(null); setAudioTranscript(""); setCorrectedText(""); }} className="ml-auto text-on-surface-variant hover:text-error text-xs">✕</button>
+                  </div>
+                  <button onClick={handleAudioUpload} disabled={loadingAudio} className="w-full bg-secondary/20 text-secondary py-2 rounded font-headline font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none">
+                    {loadingAudio ? "Processing..." : "Process Audio"}
+                  </button>
+                </div>
+              )}
+              {audioTranscript && (
+                <div className="mt-3 p-2 bg-on-surface/5 rounded text-xs space-y-1">
+                  <div className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">Raw Transcript:</div>
+                  <div className="text-on-surface">{audioTranscript}</div>
+                </div>
+              )}
+              {correctedText && (
+                <div className="mt-2 p-2 bg-secondary/10 rounded text-xs space-y-1">
+                  <div className="text-secondary font-bold text-[10px] uppercase tracking-widest">AI Corrected:</div>
+                  <div className="text-on-surface">{correctedText}</div>
+                </div>
+              )}
+            </div>
+
             {/* Image analysis (flood + traffic) */}
             <div className="glass rounded-md border border-on-surface/10 p-6 relative overflow-hidden">
               {loadingFlood && <LoadingOverlay label="AI analyzing image..." />}
