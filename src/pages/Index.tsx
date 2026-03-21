@@ -317,25 +317,113 @@ const Index = () => (
     {/* ROADMAP */}
     <Section id="roadmap" className="py-32">
       <div className="max-w-7xl mx-auto px-8">
-        <h2 className="font-headline text-4xl font-black tracking-tighter uppercase mb-20 text-center">Technical Roadmap.</h2>
-        <div className="relative py-12">
-          <div className="absolute top-1/2 left-0 w-full h-1 bg-on-surface/5 -translate-y-1/2 hidden md:block" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <h2 className="font-headline text-4xl font-black tracking-tighter uppercase mb-6 text-center">Technical Roadmap.</h2>
+        <p className="text-on-surface-variant text-center max-w-2xl mx-auto mb-20 font-body">
+          A phased approach that balances cost-efficiency with accuracy improvement at every stage.
+        </p>
+
+        {/* Timeline visual */}
+        <div className="relative">
+          {/* Connecting line */}
+          <div className="absolute top-8 left-0 w-full h-0.5 bg-outline-variant/30 hidden lg:block" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {[
-              { n: "1", title: "Phase: Precision", color: "primary", items: ["High-res Node-Edge mapping", "Core Environment Observer MVP", "Launch in HCMC Center"] },
-              { n: "2", title: "Phase: Intelligence", color: "tertiary", items: ["Multi-Agent Simulation beta", "Dashboard for B2B rollout", "Regional Expansion: Hanoi"] },
-              { n: "3", title: "Phase: Ecosystem", color: "secondary", items: ["API for Autonomous Vehicles", "SEA Market Launch (Bangkok, Jakarta)", "City Brain Integration"] },
+              {
+                n: "1",
+                title: "Phase: Precision",
+                timeline: "Months 0–6",
+                cost: "$50K–$80K",
+                accuracy: "70% → 82%",
+                color: "primary",
+                items: [
+                  "High-resolution Node-Edge mapping of HCMC center",
+                  "Core Environment Observer MVP (CCTV + weather feeds)",
+                  "Baseline Dijkstra routing with manual weight tuning",
+                ],
+                improvement: "Manual data labeling + structured traffic feeds establish ground-truth baselines for model training.",
+              },
+              {
+                n: "2",
+                title: "Phase: Intelligence",
+                timeline: "Months 6–14",
+                cost: "$120K–$200K",
+                accuracy: "82% → 93%",
+                color: "tertiary",
+                items: [
+                  "Multi-Agent Simulation beta with LLM-powered analysis",
+                  "Panoramic Dashboard for B2B rollout",
+                  "Regional expansion: Hanoi pilot",
+                ],
+                improvement: "LLM vision + audio agents replace manual inputs; feedback loops retrain models weekly on real outcomes.",
+              },
+              {
+                n: "3",
+                title: "Phase: Ecosystem",
+                timeline: "Months 14–24",
+                cost: "$300K–$500K",
+                accuracy: "93% → 97%+",
+                color: "secondary",
+                items: [
+                  "API for Autonomous Vehicles & fleet partners",
+                  "SEA market launch (Bangkok, Jakarta)",
+                  "City Brain integration & government data sharing",
+                ],
+                improvement: "Federated learning across cities; millions of daily data points create self-improving prediction loops.",
+              },
             ].map((p) => (
-              <div key={p.n} className="relative bg-surface border border-on-surface/5 p-8 rounded-md pt-16">
-                <div className={`absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-${p.color} rounded-full flex items-center justify-center font-bold text-surface border-4 border-surface`}>
+              <div key={p.n} className="relative bg-surface border border-on-surface/5 rounded-md pt-16 pb-8 px-8 flex flex-col">
+                {/* Phase circle */}
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-${p.color} rounded-full flex items-center justify-center font-black text-xl text-surface border-4 border-surface font-headline z-10`}>
                   {p.n}
                 </div>
-                <h5 className={`font-headline font-bold uppercase mb-4 text-${p.color}`}>{p.title}</h5>
-                <ul className="text-xs space-y-2 text-on-surface-variant/60 font-label">
-                  {p.items.map((i) => <li key={i}>• {i}</li>)}
+
+                <h5 className={`font-headline font-bold uppercase mb-1 text-${p.color}`}>{p.title}</h5>
+                <div className="text-xs text-on-surface-variant/50 font-label uppercase tracking-widest mb-4">{p.timeline}</div>
+
+                {/* Cost & Accuracy badges */}
+                <div className="flex gap-3 mb-6">
+                  <div className="px-3 py-1.5 bg-surface-container-high rounded text-xs font-bold font-headline">
+                    <span className="text-on-surface-variant/50 mr-1">Cost:</span>
+                    <span className="text-on-surface">{p.cost}</span>
+                  </div>
+                  <div className="px-3 py-1.5 bg-surface-container-high rounded text-xs font-bold font-headline">
+                    <span className="text-on-surface-variant/50 mr-1">Accuracy:</span>
+                    <span className={`text-${p.color}`}>{p.accuracy}</span>
+                  </div>
+                </div>
+
+                {/* Deliverables */}
+                <ul className="text-xs space-y-2 text-on-surface-variant/70 font-label mb-6 flex-1">
+                  {p.items.map((i) => <li key={i} className="flex gap-2"><span className={`text-${p.color} mt-0.5`}>▸</span>{i}</li>)}
                 </ul>
+
+                {/* Accuracy improvement note */}
+                <div className={`border-t border-${p.color}/20 pt-4`}>
+                  <div className="text-[10px] uppercase tracking-widest text-on-surface-variant/40 font-label mb-1">How Accuracy Improves</div>
+                  <p className="text-xs text-on-surface-variant/60">{p.improvement}</p>
+                </div>
               </div>
             ))}
+          </div>
+
+          {/* Progress bar visual */}
+          <div className="mt-16 bg-surface-container rounded-md p-6 border border-on-surface/5">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant/50">Accuracy Trajectory</span>
+              <span className="text-xs font-headline font-bold text-primary">Target: 97%+</span>
+            </div>
+            <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden relative">
+              <div className="absolute inset-y-0 left-0 w-[30%] bg-primary rounded-full" />
+              <div className="absolute inset-y-0 left-[30%] w-[32%] bg-tertiary rounded-full" />
+              <div className="absolute inset-y-0 left-[62%] w-[35%] bg-secondary rounded-full" />
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] font-label text-on-surface-variant/40 uppercase tracking-widest">
+              <span>70% Baseline</span>
+              <span>82%</span>
+              <span>93%</span>
+              <span>97%+</span>
+            </div>
           </div>
         </div>
       </div>
