@@ -96,7 +96,7 @@ const Index = () => (
             The Three Invisible Walls:<br /><span className="text-primary">Why Current Systems Fail.</span>
           </h2>
           <p className="font-body text-lg text-on-surface-variant max-w-2xl">
-            Urban mobility is broken by factors that standard GPS cannot see. Ho Chi Minh City loses billions annually to these phantom obstacles.
+            Urban mobility is broken by factors that standard GPS cannot see. Cities lose billions annually to these phantom obstacles.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
