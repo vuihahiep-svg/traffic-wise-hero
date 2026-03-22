@@ -30,13 +30,13 @@ const useReveal = () => {
 
 const Section = ({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) => {
   const ref = useReveal();
-  return <section ref={ref} id={id} className={className}>{children}</section>;
+  return <section ref={ref} id={id} className={`min-h-screen flex flex-col justify-center snap-start snap-always ${className}`}>{children}</section>;
 };
 
 const Index = () => (
-  <main>
+  <main className="h-screen overflow-y-auto snap-y snap-mandatory scroll-smooth">
     {/* HERO */}
-    <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden snap-start snap-always">
       <div className="absolute inset-0 z-0 opacity-30">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface z-10" />
         <img src={heroCity} alt="Aerial view of city traffic at night" className="w-full h-full object-cover grayscale" />
@@ -58,7 +58,7 @@ const Index = () => (
             </button>
           </div>
           <div className="flex items-center gap-4 mt-2">
-            <img src={qrCode} alt="QR code to access AI-Navigate" className="w-20 h-20 rounded-lg border border-outline-variant/20 bg-white p-1.5" />
+            <img src={qrCode} alt="QR code to access AI-Navigate" className="w-28 h-28 rounded-lg border border-outline-variant/20 bg-white p-2" />
             <span className="text-sm text-on-surface-variant font-label">Scan to try on mobile</span>
           </div>
         </div>
@@ -720,7 +720,7 @@ const Index = () => (
     </Section>
 
     {/* CTA */}
-    <section className="py-32 bg-primary-container text-primary-container-foreground text-center">
+    <section className="min-h-screen flex flex-col justify-center snap-start snap-always py-32 bg-primary-container text-primary-container-foreground text-center">
       <div className="max-w-4xl mx-auto px-8">
         <h2 className="font-headline text-5xl md:text-7xl font-black tracking-tighter uppercase mb-8">Join the Future of Urban Mobility.</h2>
         <Link to="/demo" className="inline-block bg-surface text-on-surface px-12 py-6 rounded font-headline font-bold uppercase tracking-widest text-xl hover:scale-105 active:scale-95 transition-transform shadow-2xl">
@@ -730,7 +730,7 @@ const Index = () => (
     </section>
 
     {/* FOOTER */}
-    <footer className="bg-surface w-full py-12 px-8 border-t border-on-surface/5">
+    <footer className="bg-surface w-full py-12 px-8 border-t border-on-surface/5 snap-start">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8">
         <div className="space-y-4">
           <div className="text-lg font-bold text-on-surface font-headline uppercase tracking-tight">AI-Navigate</div>
