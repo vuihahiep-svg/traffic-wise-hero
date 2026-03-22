@@ -58,7 +58,7 @@ const Index = () => (
             </button>
           </div>
           <div className="flex items-center gap-4 mt-2">
-            <img src={qrCode} alt="QR code to access AI-Navigate" className="w-20 h-20 rounded-lg border border-outline-variant/20 bg-white p-1.5" />
+            <img src={qrCode} alt="QR code to access AI-Navigate" className="w-28 h-28 rounded-lg border border-outline-variant/20 bg-white p-2" />
             <span className="text-sm text-on-surface-variant font-label">Scan to try on mobile</span>
           </div>
         </div>
