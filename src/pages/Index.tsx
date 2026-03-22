@@ -730,7 +730,7 @@ const Index = () => (
     </section>
 
     {/* FOOTER */}
-    <footer className="bg-surface w-full py-12 px-8 border-t border-on-surface/5">
+    <footer className="bg-surface w-full py-12 px-8 border-t border-on-surface/5 snap-start">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8">
         <div className="space-y-4">
           <div className="text-lg font-bold text-on-surface font-headline uppercase tracking-tight">AI-Navigate</div>
