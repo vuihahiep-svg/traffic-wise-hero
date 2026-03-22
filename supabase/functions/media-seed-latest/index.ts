@@ -19,17 +19,27 @@ serve(async (req) => {
 
     const apiUrl = `${API_BASE}/v1/media-seed/latest${full ? "?full=true" : ""}`;
     
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: { "Accept": "application/json" },
-    });
+    let response: Response;
+    try {
+      response = await fetch(apiUrl, {
+        method: "GET",
+        headers: { "Accept": "application/json" },
+      });
+    } catch (fetchErr) {
+      // External API unreachable — return empty routes so client resets
+      console.error("External API unreachable:", fetchErr);
+      return new Response(
+        JSON.stringify({ routes: [], crawled_at: null, source_url: null, export: null, _warning: "External API unreachable" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("External API error:", response.status, errorText);
       return new Response(
-        JSON.stringify({ error: `External API error: ${response.status}`, details: errorText }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ routes: [], crawled_at: null, source_url: null, export: null, _warning: `External API error: ${response.status}` }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
