@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { ChevronUp, ChevronDown, Presentation, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Presentation, X } from "lucide-react";
 
 const TOTAL_SLIDES = 11;
 
@@ -12,7 +12,6 @@ const PresentationControls = () => {
   const getSlides = useCallback(() => {
     const container = getContainer();
     if (!container) return [];
-    // direct children sections + footer
     return Array.from(container.children) as HTMLElement[];
   }, []);
 
@@ -26,7 +25,6 @@ const PresentationControls = () => {
   const next = useCallback(() => goTo(current + 1), [current, goTo]);
   const prev = useCallback(() => goTo(current - 1), [current, goTo]);
 
-  // Track current slide from scroll position
   useEffect(() => {
     if (!active) return;
     const container = getContainer();
@@ -35,7 +33,6 @@ const PresentationControls = () => {
     const onScroll = () => {
       const slides = getSlides();
       const scrollTop = container.scrollTop;
-      const viewH = container.clientHeight;
       let closest = 0;
       let minDist = Infinity;
       slides.forEach((el, i) => {
@@ -49,7 +46,6 @@ const PresentationControls = () => {
     return () => container.removeEventListener("scroll", onScroll);
   }, [active, getSlides]);
 
-  // Keyboard navigation
   useEffect(() => {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
@@ -92,32 +88,18 @@ const PresentationControls = () => {
         Exit Pitch
       </button>
 
-      {/* Floating controls - right side */}
-      <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3">
+      {/* Floating controls - bottom center */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
         <button
           onClick={prev}
           disabled={current === 0}
           className="w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-on-surface/10 flex items-center justify-center text-on-surface hover:bg-surface transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
         >
-          <ChevronUp size={20} />
+          <ChevronLeft size={20} />
         </button>
 
-        <div className="px-3 py-2 rounded-full bg-surface/80 backdrop-blur-md border border-on-surface/10 shadow-lg">
-          <span className="font-headline font-bold text-xs tabular-nums text-on-surface">
-            {current + 1}<span className="text-on-surface-variant/40">/{total}</span>
-          </span>
-        </div>
-
-        <button
-          onClick={next}
-          disabled={current === total - 1}
-          className="w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-on-surface/10 flex items-center justify-center text-on-surface hover:bg-surface transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
-        >
-          <ChevronDown size={20} />
-        </button>
-
-        {/* Dot indicators */}
-        <div className="flex flex-col gap-1.5 mt-2">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface/80 backdrop-blur-md border border-on-surface/10 shadow-lg">
+          {/* Dot indicators */}
           {Array.from({ length: total }).map((_, i) => (
             <button
               key={i}
@@ -129,7 +111,18 @@ const PresentationControls = () => {
               }`}
             />
           ))}
+          <span className="font-headline font-bold text-xs tabular-nums text-on-surface ml-2">
+            {current + 1}<span className="text-on-surface-variant/40">/{total}</span>
+          </span>
         </div>
+
+        <button
+          onClick={next}
+          disabled={current === total - 1}
+          className="w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-on-surface/10 flex items-center justify-center text-on-surface hover:bg-surface transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
     </>
   );
