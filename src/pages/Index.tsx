@@ -57,6 +57,10 @@ const Index = () => (
               Learn More
             </button>
           </div>
+          <div className="flex items-center gap-4 mt-2">
+            <img src={qrCode} alt="QR code to access AI-Navigate" className="w-20 h-20 rounded-lg border border-outline-variant/20 bg-white p-1.5" />
+            <span className="text-sm text-on-surface-variant font-label">Scan to try on mobile</span>
+          </div>
         </div>
         <div className="relative group" style={{ animationDelay: "200ms" }}>
           <div className="absolute -inset-4 bg-primary/20 blur-3xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
