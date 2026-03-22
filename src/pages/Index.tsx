@@ -34,9 +34,9 @@ const Section = ({ children, className = "", id }: { children: React.ReactNode; 
 };
 
 const Index = () => (
-  <main>
+  <main className="h-screen overflow-y-auto snap-y snap-mandatory scroll-smooth">
     {/* HERO */}
-    <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden snap-start snap-always">
       <div className="absolute inset-0 z-0 opacity-30">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface z-10" />
         <img src={heroCity} alt="Aerial view of city traffic at night" className="w-full h-full object-cover grayscale" />
