@@ -173,7 +173,22 @@ const Demo = () => {
 
       const routes: { route: string; score: number; reason: string; node: boolean }[] = data?.routes || [];
       if (routes.length === 0) {
-        if (!silent) addLog("⚠ No route scores returned from API");
+        if (!silent) addLog("⚠ No route scores returned — resetting all roads & nodes to default");
+        // Reset all nodes and edges to default state
+        setGraph((prevGraph) => {
+          const defaultGraph = createHCMGraph();
+          return {
+            ...prevGraph,
+            nodes: defaultGraph.nodes,
+            edges: defaultGraph.edges,
+          };
+        });
+        setTimeout(() => {
+          setGraph((g) => {
+            recalculateRoute(g);
+            return g;
+          });
+        }, 100);
         setLoadingSync(false);
         return;
       }
