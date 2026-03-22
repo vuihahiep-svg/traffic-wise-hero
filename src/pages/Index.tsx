@@ -720,7 +720,7 @@ const Index = () => (
     </Section>
 
     {/* CTA */}
-    <section className="py-32 bg-primary-container text-primary-container-foreground text-center">
+    <section className="min-h-screen flex flex-col justify-center snap-start snap-always py-32 bg-primary-container text-primary-container-foreground text-center">
       <div className="max-w-4xl mx-auto px-8">
         <h2 className="font-headline text-5xl md:text-7xl font-black tracking-tighter uppercase mb-8">Join the Future of Urban Mobility.</h2>
         <Link to="/demo" className="inline-block bg-surface text-on-surface px-12 py-6 rounded font-headline font-bold uppercase tracking-widest text-xl hover:scale-105 active:scale-95 transition-transform shadow-2xl">
