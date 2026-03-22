@@ -1,4 +1,5 @@
 import heroCity from "@/assets/hero-city.jpg";
+import qrCode from "@/assets/qr-code.png";
 import trafficSimRoute from "@/assets/traffic-simulation-route.jpg";
 import agentsNetwork from "@/assets/ai-agents-network.png";
 import cityEyesEars from "@/assets/city-eyes-ears.jpg";
