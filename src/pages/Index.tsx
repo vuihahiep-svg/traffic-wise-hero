@@ -30,7 +30,7 @@ const useReveal = () => {
 
 const Section = ({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) => {
   const ref = useReveal();
-  return <section ref={ref} id={id} className={className}>{children}</section>;
+  return <section ref={ref} id={id} className={`min-h-screen flex flex-col justify-center snap-start snap-always ${className}`}>{children}</section>;
 };
 
 const Index = () => (
