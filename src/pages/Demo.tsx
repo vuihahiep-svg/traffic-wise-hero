@@ -265,11 +265,11 @@ const Demo = () => {
     setLoadingSync(false);
   }, [addLog, recalculateRoute]);
 
-  // Auto-sync every 30 seconds
+  // Auto-sync every 8 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       syncMediaSeed(true);
-    }, 30000);
+    }, 8000);
     return () => clearInterval(interval);
   }, [syncMediaSeed]);
 
