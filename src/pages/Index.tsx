@@ -1,4 +1,5 @@
 import heroCity from "@/assets/hero-city.jpg";
+import qrCode from "@/assets/qr-code.png";
 import trafficSimRoute from "@/assets/traffic-simulation-route.jpg";
 import agentsNetwork from "@/assets/ai-agents-network.png";
 import cityEyesEars from "@/assets/city-eyes-ears.jpg";
@@ -55,6 +56,10 @@ const Index = () => (
             <button onClick={() => document.getElementById("solution")?.scrollIntoView({ behavior: "smooth" })} className="border border-outline-variant/30 text-on-surface px-8 py-4 rounded font-headline font-bold uppercase tracking-widest hover:bg-on-surface/5 transition-all active:scale-95">
               Learn More
             </button>
+          </div>
+          <div className="flex items-center gap-4 mt-2">
+            <img src={qrCode} alt="QR code to access AI-Navigate" className="w-20 h-20 rounded-lg border border-outline-variant/20 bg-white p-1.5" />
+            <span className="text-sm text-on-surface-variant font-label">Scan to try on mobile</span>
           </div>
         </div>
         <div className="relative group" style={{ animationDelay: "200ms" }}>
