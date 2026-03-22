@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import PresentationControls from "./PresentationControls";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -21,6 +22,7 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 font-headline font-bold uppercase tracking-tighter text-sm">
+          {isHome && <PresentationControls />}
           <Link
             to="/demo"
             className="text-primary-container hover:text-primary transition-colors px-4 py-1.5 rounded bg-primary-container/10 border border-primary-container/30"
